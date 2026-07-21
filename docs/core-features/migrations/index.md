@@ -53,7 +53,7 @@ Defines specific environments that should be explicitly skipped during the migra
 
 * **`dry`** | **`-d`**  
 Simulates the migration process without committing any actual changes to the database.
-> **Details:** Highly recommended for verifying exactly which migration files will be applied before executing them on a live system.  
+> **Details:** Highly recommended for verifying exactly which migration files will be applied before executing them on a live system. Migration files are not loaded in dry mode, so their skip, environment, and manual markers are not evaluated — every pending migration is reported as importable.  
 > **Usage:** `db:migrate -d`
 
 
@@ -420,6 +420,7 @@ Defines which environments should be explicitly ignored during the sync.
 
 * **`dry`** | **`d`**  
 Simulates the sync process. It shows which files would be marked as executed without updating the database history.
+> **Details:** Date and version filters still apply, but migration files are not loaded, so environment markers are not evaluated.  
 > **Usage:** `db:sync -d`
 
 
