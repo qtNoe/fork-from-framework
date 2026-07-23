@@ -4,6 +4,9 @@ This is a simple changelog to keep track of things that have changed. It is not 
 ## ToDos
 These todos should be as temporary as possible:
 
+## v1.4.0
+1. Fixed `--dry` executing PHP migrations in `db:migrate` and `db:sync`. Migration files are no longer loaded during a dry run, so skip and environment markers are not evaluated - every pending migration is reported
+
 ## v1.2.0
 1. Added DEV Changelog
 1. Add logging folder to .gitignore
