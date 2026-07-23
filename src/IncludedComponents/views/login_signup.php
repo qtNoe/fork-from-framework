@@ -4,7 +4,6 @@
  */
 
 return ["head" => function($opt) { ?>
-	<link rel="stylesheet" href="<?php echo $opt["root"]; ?>assets/css/loadCircle.css">
 	<style>
 		.login-error {
 			color: red;
@@ -42,8 +41,6 @@ return ["head" => function($opt) { ?>
 			<a class="link" href="<?php echo $opt["root"]; ?>login/">Login?</a>
 		</form>
 	</div>
-
-	<div class="loading" id="loading" style="display: none;">Loading&#8230;</div>
 
 	<script>
 		function register() {

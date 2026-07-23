@@ -4,9 +4,6 @@
  */
 
 return ["head" => function($opt) { ?>
-
-    <link rel="stylesheet" href="<?php echo $opt["root"]; ?>assets/css/loadCircle.css">
-
 	<style>
 		.login-error {
 			color: red;
@@ -29,27 +26,23 @@ return ["head" => function($opt) { ?>
 			</form>
 		</div>
 
-		<div class="loading" id="loading" style="display: none;">Loading&#8230;</div>
-
     <script>
         function check() {
 			const url = "<?php echo $opt["root"]; ?>login/forgot_password/check";
-			$("#loading").show();
+			Z.loader.show();
             sendPost(url, {"unameemail": document.getElementById("usernameemail").value});
         }
 
         function sendPost(url, params) {
             $.post(url, params).done((data) => {
 				if(JSON.parse(data).result == "success") {
-					$("#loading").hide(0, () => {
-						alert("An email was sent. Please check your inbox.");
-					});
+					Z.loader.hide();
+					alert("An email was sent. Please check your inbox.");
                 } else {
-					$("#loading").hide();
+					Z.loader.hide();
                     document.getElementById("login-error-label").innerHTML = `Your account could not be found. Please try again.`;
                 }
 			});
-			$("#loading").hide();
         }
     </script>
 

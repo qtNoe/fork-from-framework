@@ -4,7 +4,6 @@
  */
 
 return ["head" => function($opt) { ?>
-	<link rel="stylesheet" href="<?php echo $opt["root"]; ?>assets/css/loadCircle.css">
 	<style>
 		.login-error {
 			color: red;

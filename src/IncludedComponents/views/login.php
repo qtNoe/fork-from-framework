@@ -3,9 +3,7 @@
  * The login view
  */
 
-return ["head" => function($opt) { ?>
-	<link rel="stylesheet" href="<?php echo $opt["root"]; ?>assets/css/loadCircle.css">
-<?php }, "body" => function($opt) { ?>
+return ["body" => function($opt) { ?>
 
 	<div style="max-width: 1000px; margin: auto">
 		<h2>Login</h2>
@@ -31,8 +29,6 @@ return ["head" => function($opt) { ?>
 			<a class="link" href="<?php echo $opt["root"]; ?>login/signup">Don't have a account?</a>
 		</form>
 	</div>
-
-	<div class="loading" id="loading" style="display: none;">Loading&#8230;</div>
 
 	<script>
 		function login() {

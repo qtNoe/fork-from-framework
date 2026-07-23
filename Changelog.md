@@ -4,6 +4,9 @@ This is a simple changelog to keep track of things that have changed. It is not 
 ## ToDos
 These todos should be as temporary as possible:
 
+## v1.4.0
+1. Added #159 - `Z.loader.show()` / `Z.loader.hide()` loading overlay in `Z.js` with an optional element target; the css is injected on first use. The login presets use it automatically and `assets/css/loadCircle.css` has been removed
+
 ## v1.2.0
 1. Added DEV Changelog
 1. Add logging folder to .gitignore

@@ -97,6 +97,84 @@ Z = {
     rootPath: ""
   },
   /**
+   * Fullscreen or element-scoped loading overlay with an animated spinner
+   */
+  loader: {
+    /**
+     * Shows a loading overlay. The required css is injected on first use.
+     * @param {string|HTMLElement} [target] Element or element id to cover. Covers the whole page when omitted.
+     */
+    show(target) {
+      this._injectStyle();
+
+      var host = this._resolveTarget(target);
+      if (!host || host.querySelector(":scope > .z-loader")) return;
+
+      if (host !== document.body && getComputedStyle(host).position === "static") {
+        host.style.position = "relative";
+      }
+
+      var overlay = document.createElement("div");
+      overlay.className = "z-loader";
+      overlay.appendChild(document.createElement("div")).className = "z-loader-spinner";
+      host.appendChild(overlay);
+    },
+    /**
+     * Hides the loading overlay created by show()
+     * @param {string|HTMLElement} [target] Element or element id that was passed to show()
+     */
+    hide(target) {
+      var host = this._resolveTarget(target);
+      if (!host) return;
+      host.querySelectorAll(":scope > .z-loader").forEach((overlay) => overlay.remove());
+    },
+    /**
+     * @private
+     */
+    _resolveTarget(target) {
+      if (typeof target === "string") return document.getElementById(target);
+      return target || document.body;
+    },
+    /**
+     * @private
+     */
+    _injectStyle() {
+      if (document.getElementById("z-loader-style")) return;
+
+      var style = document.createElement("style");
+      style.id = "z-loader-style";
+      style.textContent = `
+        .z-loader {
+          position: absolute;
+          inset: 0;
+          z-index: 999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        body > .z-loader {
+          position: fixed;
+        }
+
+        .z-loader-spinner {
+          width: 3em;
+          height: 3em;
+          border: 0.4em solid rgba(255, 255, 255, 0.45);
+          border-top-color: #fff;
+          border-radius: 50%;
+          animation: z-loader-spin 1s linear infinite;
+        }
+
+        @keyframes z-loader-spin {
+          to { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  },
+  /**
    * List of lang attributes for user feedback. These can be overwritten in the layout after embeding the layout essentials.
    */
   Lang: {
@@ -140,15 +218,10 @@ Z = {
       var ePassword = document.getElementById(passwordElementId);
       var errorLabel = document.getElementById(errorLabelId);
 
-      var loader = document.getElementById("loading");
-      if (loader) {
-        loader.style.display = "";
-      }
+      Z.loader.show();
       errorLabel.style.display = "none";
-      Z.Request.root('login', 'login', {name: eName.value, password: ePassword.value}, (res) => {  
-        if (loader) {
-          loader.style.display = "none";
-        }
+      Z.Request.root('login', 'login', {name: eName.value, password: ePassword.value}, (res) => {
+        Z.loader.hide();
 
         if (res.result == "success") {
           if (redirect == "") {
@@ -183,14 +256,9 @@ Z = {
      */
     ForgotPassword(unameemailElementId, errorLabel, redirect = "") {
       var eUnameemail = document.getElementById(unameemailElementId);
-      var loader = document.getElementById("loading");
-      if (loader) {
-        loader.style.display = "";
-      }
-      Z.Request.root('login/forgot_password', 'forgot_password', {unameemail: eUnameemail.value}, (res) => {  
-        if (loader) {
-          loader.style.display = "none";
-        }
+      Z.loader.show();
+      Z.Request.root('login/forgot_password', 'forgot_password', {unameemail: eUnameemail.value}, (res) => {
+        Z.loader.hide();
         if (res.result == "success") {
           if (redirect == "") {
             window.location.reload();
@@ -238,10 +306,7 @@ Z = {
         }
       }
 
-      var loader = document.getElementById("loading");
-      if (loader) {
-        loader.style.display = "";
-      }
+      Z.loader.show();
 
       let postData = {
         email: eName.value,
@@ -249,9 +314,7 @@ Z = {
       };
 
       Z.Request.root('login/signup', 'signup', Object.assign(postData, additionalData), (res) => {
-        if (loader) {
-          loader.style.display = "none";
-        }
+        Z.loader.hide();
 
         if (res.result == "error") {
           let msg = res.message;

@@ -140,6 +140,7 @@ nav:
     - Frontend Integration:
         - Backend Requests: frontend-integration/backend-requests
         - Presets: frontend-integration/presets
+        - Loading Overlay: frontend-integration/loader
     - Template Rendering Usages:
         - Sending Mails: template-rendering-usages/sending-an-email
     - Advanced Features:

@@ -50,5 +50,9 @@
                 "userId" =>  $req->getRequestingUser()->userId ?? 0
             ]);
         }
+
+        public function action_loader(Request $req, Response $res) {
+            return $res->render("frontend/loader");
+        }
     }
 ?>
