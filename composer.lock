@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "556464788056ae54929c52dbb05d3b3c",
+    "content-hash": "53f0c58a96714532bf1b7ea3fa11023a",
     "packages": [
         {
             "name": "cakephp/core",
@@ -718,6 +718,48 @@
                 }
             ],
             "time": "2025-08-08T12:00:00+00:00"
+        },
+        {
+            "name": "katanaphp/blade",
+            "version": "dev-bugfix/compiled-view-cache-collision",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/katanaphp/blade.git",
+                "reference": "a4598bc7cc4f976dd89aa57233964ea0d828d822"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/katanaphp/blade/zipball/a4598bc7cc4f976dd89aa57233964ea0d828d822",
+                "reference": "a4598bc7cc4f976dd89aa57233964ea0d828d822",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^2.2",
+                "phpunit/phpunit": "^9",
+                "symfony/var-dumper": "^5"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Blade\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Standalone version of Laravel Blade",
+            "support": {
+                "issues": "https://github.com/katanaphp/blade/issues",
+                "source": "https://github.com/katanaphp/blade/tree/bugfix/compiled-view-cache-collision"
+            },
+            "time": "2026-07-25T13:43:04+00:00"
         },
         {
             "name": "league/mime-type-detection",
@@ -2621,7 +2663,9 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "katanaphp/blade": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

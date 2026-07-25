@@ -20,7 +20,8 @@
         "php-debugbar/php-debugbar": "^1.23.6",
         "components/jquery": "3.5.*",
         "components/bootstrap": "4.6.*",
-        "components/font-awesome": "6.5.*"
+        "components/font-awesome": "6.5.*",
+        "katanaphp/blade": "dev-bugfix/compiled-view-cache-collision#a4598bc7cc4f976dd89aa57233964ea0d828d822"
     },
     "autoload": {
         "files": [

@@ -22,3 +22,21 @@ npm run tests -- --spec 'tests/cypress/e2e/core/<name>.cy.js'
 App is at `http://localhost:8080` (NOT `:4000`).
 
 Feature PRs target `develop` (promoted to `main` separately) — not `main`. Use atomic conventional commits (`refactor(...)`, `feat(...)`, `test(...)`, `docs(...)` — one scope per commit, one-line message, no `Co-Authored-By` trailer).
+
+## Work in progress: Katana render engine (issue #145)
+
+The return-type view renderer is being replaced by the [Katana](https://github.com/katanaphp/blade)
+Blade engine (`.blade.php`), Blade-only (no closure fallback). Views are migrated by
+version-migrator v1.3; framework-bundled views are migrated in-repo. The main goal of this WIP is to
+surface which hooks Katana still needs — see
+[docs/contributing/katana-integration-findings.md](docs/contributing/katana-integration-findings.md).
+
+- `src/Rendering/KatanaRenderer.php` — the only Katana glue; every workaround in it maps to a Katana
+  change-point in the findings doc (section state leaking, single view root, no render-from-string).
+- **No patches.** The Katana repo moved to `katanaphp/blade` (the `soysudhanshu/katana` Composer
+  package still resolves, now sourced from there); `composer.json` pins `dev-master`. Both earlier
+  fixes are upstream now — [#56](https://github.com/katanaphp/blade/pull/56) (PHP 8.0) and
+  [#57](https://github.com/katanaphp/blade/pull/57) (`@extends` data) — so `vendor/` is used as
+  installed, with no patch step. See the findings doc for the full upstream status (incl. why the #55
+  ViewFinder rewrite was prototyped and deferred).
+- `src/Support/Helpers.php` — `e()` delegates to `\Blade\e()`.
