@@ -130,6 +130,7 @@ nav:
         - Error Handling: core-features/error-handling
         - Asset Proxy: core-features/asset-proxy
         - Maintenance: core-features/maintenance
+        - Health Endpoint: core-features/health-endpoint
     - Admin Dashboard:
         - Genral Usage: z-admin/usage
         - Login as another User: z-admin/login-as-another-user

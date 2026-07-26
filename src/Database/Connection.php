@@ -361,7 +361,11 @@
          */
         public function disconnect() {
             if(!isset($this->conn)) return;
-            $this->conn->close();
+
+            try {
+                $this->conn->close();
+            } catch(\Throwable) {}
+            unset($this->conn);
         }
 
         /**
