@@ -1,4 +1,6 @@
-<?php return [ "body" => function($opt) { ?>
+@extends($layout)
+
+@section("content")
     <div id="fallback-form" data-test="form"></div>
 
     <script>
@@ -11,4 +13,4 @@
             type: "text",
         });
     </script>
-<?php }]; ?>
+@endsection

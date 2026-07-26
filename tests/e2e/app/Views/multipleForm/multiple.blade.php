@@ -1,4 +1,6 @@
-<?php return [ "body" => function($opt) { ?>
+@extends($layout)
+
+@section("content")
     <div id="billing-form" data-test="billing-form"></div>
     <div id="shipping-form" data-test="shipping-form"></div>
 
@@ -23,4 +25,4 @@
             type: "text",
         });
     </script>
-<?php }]; ?>
+@endsection
