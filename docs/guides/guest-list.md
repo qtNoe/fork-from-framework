@@ -143,13 +143,15 @@ Finally, we need to render a view and pass the guest list to it.
 
     More information can be found [here](../core-features/views)
 
-To create a [view](../core-features/views), add a folder named `guests` in the `z_views` folder and inside this folder add a file named `guests_list.php`:
-```php
-<?php return ["body" => function ($opt) { ?>
+To create a [view](../core-features/views), add a folder named `guests` in the `z_views` folder and inside this folder add a file named `guests_list.blade.php`:
+```blade
+@extends($layout)
 
-<?php }]; ?>
+@section("content")
+
+@endsection
 ```
-All views follow this structure. Between the `?>` and `<?php` tags, you will add your HTML content.  
+All views follow this structure. Inside the `@section("content")` block, you will add your HTML content.  
 The file name should be intuitive and descriptive for easy identification.
 
 In the controller, render the view like this:
@@ -160,7 +162,7 @@ In the controller, render the view like this:
         public function action_list(Request $req, Response $res) {
             $guests = $req->getModel('Guests')->getGuests();
 
-            return $res->render("guests/guests_list.php", [
+            return $res->render("guests/guests_list", [
                 "guests" => $guests
             ]);
         }
@@ -177,8 +179,10 @@ A controller doesn't always need to render a view. It can handle tasks like proc
 ## Displaying Guests in the View
 Create an HTML table to display the guests, with columns for `First Name`, `Last Name`, and `Email`:
 
-```php
-<?php return ["body" => function ($opt) { ?>
+```blade
+@extends($layout)
+
+@section("content")
     <table>
         <thead>
             <tr>
@@ -191,11 +195,13 @@ Create an HTML table to display the guests, with columns for `First Name`, `Last
 
         </tbody>
     </table>
-<?php }]; ?>
+@endsection
 ```
 To populate the table with guest data, loop through the `guests` array:
-```php
-<?php return ["body" => function ($opt) { ?>
+```blade
+@extends($layout)
+
+@section("content")
     <table>
         <thead>
             <tr>
@@ -210,11 +216,13 @@ To populate the table with guest data, loop through the `guests` array:
             <?php } ?>
         </tbody>
     </table>
-<?php }]; ?>
+@endsection
 ```
 Now, for each guest, add a row displaying their details:
-```php
-<?php return ["body" => function ($opt) { ?>
+```blade
+@extends($layout)
+
+@section("content")
     <table>
         <thead>
             <tr>
@@ -233,7 +241,7 @@ Now, for each guest, add a row displaying their details:
             <?php } ?>
         </tbody>
     </table>
-<?php }]; ?>
+@endsection
 ```
 The use of `$guest["first_name"]` corresponds to the column names defined in the database. These identifiers map the data retrieved from the database to the respective fields for display in the view.
 

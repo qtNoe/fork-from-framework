@@ -74,8 +74,10 @@ INSERT INTO `book` (`title`, `author`, `description`) VALUES
 <details>
     <summary>View</summary>
     list
-    ```html
-    <?php return ["body" => function ($opt) { ?>
+    ```blade
+    @extends($layout)
+
+    @section("content")
         <table>
             <thead>
                 <tr>
@@ -94,7 +96,7 @@ INSERT INTO `book` (`title`, `author`, `description`) VALUES
                 <?php } ?>
             </tbody>
         </table>
-    <?php }]; ?>
+    @endsection
     ```
 </details>
 
@@ -156,8 +158,10 @@ Checking permissions directly in a view can be very useful for controlling the v
 
 In this example, we will check if the user has the `library.delete` permission. If they do, they will see a button to delete a book. Otherwise, a message saying "No permissions" will be displayed.
 
-```php
-<?php return ["body" => function ($opt) { ?>
+```blade
+@extends($layout)
+
+@section("content")
     <table>
         <thead>
             <tr>
@@ -184,7 +188,7 @@ In this example, we will check if the user has the `library.delete` permission. 
             <?php } ?>
         </tbody>
     </table>
-<?php }]; ?>
+@endsection
 ```
 #### Explanation
 

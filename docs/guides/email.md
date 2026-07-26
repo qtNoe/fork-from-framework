@@ -29,32 +29,32 @@ EmailController
 <details>
 <summary>Layout</summary>
 email_layout
-```php
-<?php return ["layout" => function($opt, $body, $head) { ?>
-    <!doctype html>
-    <html lang="en">
-        <head>
-            <?php $head($opt); ?>
-        </head>
-        <body class="d-flex flex-column min-vh-100">
-            <h2>EMail Layout</h2>
+```blade
+<!doctype html>
+<html lang="en">
+    <head>
+        @yield("head")
+    </head>
+    <body class="d-flex flex-column min-vh-100">
+        <h2>EMail Layout</h2>
 
-            <main class="container mt-5">
-                <?php $body($opt); ?>
-            </main>
-        </body>
-    </html>
-<?php }] ?>
+        <main class="container mt-5">
+            @yield("content")
+        </main>
+    </body>
+</html>
 ```
 </details>
 
 <details>
 <summary>View</summary>
 email
-```php
-<?php return ["body" => function ($opt) { ?>
+```blade
+@extends($layout)
+
+@section("content")
     <h2>This is an test email</h2>
-<?php }]; ?>
+@endsection
 ```
 </details>
 
@@ -97,7 +97,7 @@ Emails are sent from controllers, and the ZubZet framework provides two methods 
     4. `options`: An array of values to pass to the view file.
     5. `layout`: The layout file for the email.
 
-For the email layout, it is essential that the filename ends with `_layout.php`; otherwise, the file will not be recognized by the framework. This naming convention ensures the layout file is correctly located and applied during email rendering.
+For the email layout, it is essential that the filename ends with `_layout.blade.php`; otherwise, the file will not be recognized by the framework. This naming convention ensures the layout file is correctly located and applied during email rendering.
 
 ### Example
 ```php
@@ -113,7 +113,7 @@ For the email layout, it is essential that the filename ends with `_layout.php`;
                 [
                     "name" => "John Doe"        // Options
                 ],
-                "email_layout.php",             // Layout file
+                "email_layout",                 // Layout file
             );
         }
 
@@ -125,7 +125,7 @@ For the email layout, it is essential that the filename ends with `_layout.php`;
                 [
                     "plan" => "Premium"        // Options
                 ],
-                "email_layout.php"             // Layout file
+                "email_layout"                 // Layout file
             );
         }
     }
