@@ -8,11 +8,11 @@
 
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <x-zubzet.head :opt="$opt"/>
+        <x-zubzet::head :opt="$opt"/>
         @yield("head")
     </head>
     <body>
         @yield("content")
-        <x-zubzet.body :opt="$opt"/>
+        <x-zubzet::body :opt="$opt"/>
     </body>
 </html>

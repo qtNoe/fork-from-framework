@@ -1,6 +1,6 @@
 {{-- The framework's head essentials, previously layout_essentials.php::essentialsHead().
      Registered as a shared anonymous-component path by the Katana engine, so every layout
-     resolves <x-zubzet.head/> whatever view root it lives under. Takes the render
+     resolves <x-zubzet::head/> whatever view root it lives under. Takes the render
      data as :opt, and :custom-bootstrap to skip the bundled Bootstrap JS. --}}
 <script src="<?php $opt["generateResourceLink"]("_zubzet/asset-proxy/js/jquery.min.js"); ?>"></script>
 <script src="<?php $opt["generateResourceLink"]("_zubzet/asset-proxy/js/popper.min.js"); ?>"></script>

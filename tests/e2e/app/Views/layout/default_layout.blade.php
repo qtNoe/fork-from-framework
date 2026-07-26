@@ -1,7 +1,7 @@
 <!doctype html>
 <html class="no-js" lang="de">
     <head>
-        <x-zubzet.head :opt="$opt"/>
+        <x-zubzet::head :opt="$opt"/>
         @yield("head")
     </head>
     <body id="top" data-test="dashboard-top">
@@ -25,6 +25,6 @@
             </div>
         </div>
 
-        <x-zubzet.body :opt="$opt"/>
+        <x-zubzet::body :opt="$opt"/>
     </body>
 </html>

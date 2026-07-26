@@ -49,6 +49,14 @@
 
             $blade = new Blade(config: $config);
 
+            // Register the framework's own components under the "zubzet" namespace, so
+            // <x-zubzet::head/> resolves to IncludedComponents/views/components/*.blade.php and
+            // can neither shadow nor be shadowed by an app component (katanaphp/blade#66).
+            $blade->addAnonymousComponentPath(
+                zubzet()->z_framework_root . "IncludedComponents/views/components",
+                "zubzet",
+            );
+
             // The migrated view does @extends($layout); hand it the layout's view name.
             $data["layout"] = $layout;
 

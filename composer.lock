@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "53f0c58a96714532bf1b7ea3fa11023a",
+    "content-hash": "d7b9c80b44a262d4d2cb9afd65cb424a",
     "packages": [
         {
             "name": "cakephp/core",
@@ -721,16 +721,16 @@
         },
         {
             "name": "katanaphp/blade",
-            "version": "dev-bugfix/compiled-view-cache-collision",
+            "version": "dev-integration/zubzet",
             "source": {
                 "type": "git",
                 "url": "https://github.com/katanaphp/blade.git",
-                "reference": "a4598bc7cc4f976dd89aa57233964ea0d828d822"
+                "reference": "ac9a8f2d338d0e6e7fd8ea5094ede615e9fb6a5c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/katanaphp/blade/zipball/a4598bc7cc4f976dd89aa57233964ea0d828d822",
-                "reference": "a4598bc7cc4f976dd89aa57233964ea0d828d822",
+                "url": "https://api.github.com/repos/katanaphp/blade/zipball/ac9a8f2d338d0e6e7fd8ea5094ede615e9fb6a5c",
+                "reference": "ac9a8f2d338d0e6e7fd8ea5094ede615e9fb6a5c",
                 "shasum": ""
             },
             "require": {
@@ -757,9 +757,9 @@
             "description": "Standalone version of Laravel Blade",
             "support": {
                 "issues": "https://github.com/katanaphp/blade/issues",
-                "source": "https://github.com/katanaphp/blade/tree/bugfix/compiled-view-cache-collision"
+                "source": "https://github.com/katanaphp/blade/tree/integration/zubzet"
             },
-            "time": "2026-07-25T13:43:04+00:00"
+            "time": "2026-07-26T18:13:11+00:00"
         },
         {
             "name": "league/mime-type-detection",

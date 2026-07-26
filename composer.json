@@ -21,7 +21,7 @@
         "components/jquery": "3.5.*",
         "components/bootstrap": "4.6.*",
         "components/font-awesome": "6.5.*",
-        "katanaphp/blade": "dev-bugfix/compiled-view-cache-collision#a4598bc7cc4f976dd89aa57233964ea0d828d822"
+        "katanaphp/blade": "dev-integration/zubzet#ac9a8f2d338d0e6e7fd8ea5094ede615e9fb6a5c"
     },
     "autoload": {
         "files": [
