@@ -5,7 +5,6 @@
     use Blade\View;
     use Blade\Blade;
     use Blade\Config;
-    use Blade\FileSystemViewFinder;
 
     /**
      * Thin adapter around the Katana Blade engine.
@@ -20,8 +19,22 @@
      */
     class Engine {
 
+        /**
+         * @internal
+         * One-shot extra view roots, prepended to the NEXT render at highest precedence
+         * and then consumed. Escape hatch for forcing a specific source. Caution: This
+         * WILL be removed in future versions in favor of a modular view resolver.
+         */
+        public static ?string $testOverwriteViewPath = null;
+
         public static function render(string $view, string $layout, array $data): View {
             $config = new Config(self::cachePath());
+
+            // One-shot extra roots (highest precedence), e.g. forcing the framework copy over a
+            // userspace override. Registered before the standard roots, then consumed.
+            if(!is_null(self::$testOverwriteViewPath)) {
+                $config->addViewPath(self::$testOverwriteViewPath);
+            }
 
             // Ordered view roots: userspace first, framework second. First finder that has the
             // name wins, so userspace overrides framework. This one chain resolves the view, the

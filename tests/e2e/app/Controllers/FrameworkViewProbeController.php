@@ -1,15 +1,20 @@
 <?php
 
-    // Renders framework-shipped views (IncludedComponents/views/*) directly
-    // by absolute path. CanRenderView::resolvePath returns paths that already
-    // start with the framework views root verbatim - bypassing the user-space
-    // override lookup. That way the framework versions get exercised even
-    // when the test app provides an override for the same name.
+    // Renders framework-shipped views (IncludedComponents/views/*) even when the test app
+    // provides an override for the same name, so the framework versions get exercised.
+    // frameworkView() registers the framework views root as a highest-precedence one-shot
+    // finder (Engine::addViewPath) before the render, so the framework copy wins.
     // Covered by tests/cypress/e2e/core/framework-views.cy.js.
+
+    use ZubZet\Framework\Rendering\Katana\Engine;
+
     class FrameworkViewProbeController extends z_controller {
 
+        // Force the framework copy for the upcoming render, then reference the view by name.
         private function frameworkView(string $name): string {
-            return zubzet()->z_framework_root . "IncludedComponents/views/" . $name;
+            $root = zubzet()->z_framework_root;
+            Engine::$testOverwriteViewPath =  "{$root}IncludedComponents/views/$name";
+            return $name;
         }
 
         public function action_login(Request $req, Response $res) {
