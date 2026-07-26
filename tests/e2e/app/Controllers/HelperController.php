@@ -42,6 +42,14 @@
             ]);
         }
 
+        public function action_view_dotted(Request $req, Response $res) {
+            // Same view as action_view, addressed with Laravel-style dot notation
+            // ("core.render") instead of the slash path ("core/render").
+            view("core.render", [
+                "data" => "HelperFunction",
+            ]);
+        }
+
         /*
          * Pure global helpers from src/Support/Helpers.php.
          * Each action runs the helper against its probe cases and returns a

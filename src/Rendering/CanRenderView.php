@@ -20,12 +20,50 @@
         public static function resolvePath(string $document, bool $throwOnError = false): string {
             $document = rtrim($document);
 
-            // Ensure an extension is present. This might possibly be changed in the future due to different
-            // template types that will be offered, including a plan to offer a rendered template
-            if(!str_ends_with($document, ".php")) {
-                $document .= ".php";
+            // Since 1.3.0 views are Katana .blade.php documents. Strip a legacy ".php"
+            // or explicit ".blade.php" suffix down to the bare view name first, so a
+            // dot in the extension is never treated as a path separator below.
+            if(str_ends_with($document, ".blade.php")) {
+                $name = substr($document, 0, -strlen(".blade.php"));
+            } else if(str_ends_with($document, ".php")) {
+                $name = substr($document, 0, -strlen(".php"));
+            } else {
+                $name = $document;
             }
 
+            // Resolution candidates, in order. The literal form preserves the historical
+            // behaviour (slash paths like "admin/users", already-rooted paths, and any
+            // real dotted filename). A bare Laravel-style dotted name ("admin.users")
+            // additionally resolves with dots as separators, but only as a fallback, so
+            // nothing that already resolves changes.
+            $candidates = [$name . ".blade.php"];
+            if(!str_contains($name, "/") && str_contains($name, ".")) {
+                $candidates[] = str_replace(".", "/", $name) . ".blade.php";
+            }
+
+            foreach($candidates as $candidate) {
+                $located = self::locateExistingView($candidate);
+                if($located !== null) {
+                    return $located;
+                }
+            }
+
+            // Handle when no view was found
+            if(!$throwOnError) {
+                return zubzet()->z_framework_root."IncludedComponents/views/500.blade.php";
+            }
+
+            throw new ViewNotFoundException("View file for '$document' not found. Is the path correct?");
+        }
+
+        /**
+         * @internal
+         * Probe user space then framework space for a relative (or already-rooted)
+         * ".blade.php" document, honouring userspace-overrides-framework precedence.
+         * @param string $document A ".blade.php" document (bare relative path or absolute)
+         * @return string|null Absolute path to the view, or null if neither space has it
+         */
+        private static function locateExistingView(string $document): ?string {
             // Look for the view in the user space, don't readd the location if it is already present
             $userSpaceLocationDocument = $document;
             if(!str_starts_with($document, zubzet()->z_views)) {
@@ -46,12 +84,7 @@
                 return $frameworkLocationDocument;
             }
 
-            // Handle when no view was found
-            if(!$throwOnError) {
-                return zubzet()->z_framework_root."IncludedComponents/views/500.php";
-            }
-
-            throw new ViewNotFoundException("View file for '$document' not found. Is the path correct?");
+            return null;
         }
 
         /**
