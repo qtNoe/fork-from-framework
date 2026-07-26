@@ -43,7 +43,10 @@
                 // Do not log this render to avoid having to require a database
             }
 
-            DebugBarBridge::collectTemplate($viewName, $opt, "blade", $layoutName);
+            // The debug bar shows the reference the caller passed (with its
+            // extension), not the extension-stripped Katana name, so a render of
+            // "login.php" reads as "login.php" and the layout keeps its ".php".
+            DebugBarBridge::collectTemplate($document, $opt, "blade", $layout);
 
             // Expand legacy $opt with framework variables, functions, and objects
             // likely subject to deprecation in the future as the expansions overwrite
