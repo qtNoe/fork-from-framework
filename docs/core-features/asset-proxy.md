@@ -21,16 +21,17 @@ first registered source that contains it.
 Use the `generateResourceLink` helper available on every view's `$opt` array — it builds a correct,
 root-relative URL for you:
 
-```php
-<?php return [
-    "head" => function($opt) { ?>
-        <link rel="stylesheet"
-              href="<?php $opt["generateResourceLink"]("_zubzet/asset-proxy/css/bootstrap.min.css"); ?>">
-    <?php },
-    "body" => function($opt) { ?>
-        <script src="<?php $opt["generateResourceLink"]("_zubzet/asset-proxy/js/jquery.min.js"); ?>"></script>
-    <?php }
-]; ?>
+```blade
+@extends($layout)
+
+@section("head")
+    <link rel="stylesheet"
+          href="<?php $opt["generateResourceLink"]("_zubzet/asset-proxy/css/bootstrap.min.css"); ?>">
+@endsection
+
+@section("content")
+    <script src="<?php $opt["generateResourceLink"]("_zubzet/asset-proxy/js/jquery.min.js"); ?>"></script>
+@endsection
 ```
 
 ## Bundled assets

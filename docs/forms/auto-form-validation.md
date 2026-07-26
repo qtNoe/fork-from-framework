@@ -128,7 +128,7 @@ var form = Z.Forms.create({
 
 ## Back-end
 When the form is submitted, it will send an asynchronous post request to the current action specified by the current users url.
-To check in the action if the current request is from a form, [`$req->hasFormData()`](https://zdoc.zierhut-it.de/classes/Request.html#method_hasFormData) can be used. This is example code for handling a form:
+To check in the action if the current request is from a form, `$req->hasFormData()` can be used. This is example code for handling a form:
 
 ### **Backend validation**
 ```php
@@ -227,7 +227,7 @@ public function action_manage(Request $req, Response $res) {
         ]);
     }
 
-    return $res->render("employee/employee_edit.php", [
+    return $res->render("employee/employee_edit", [
         "employee" => $employee,
         "types" => $this->makeFood(
             $req->getModel("Employee")->getTypes(),
@@ -413,7 +413,7 @@ This feature leverages a function called makeFood, which is used in the controll
 
 ```php
 // Controller
-return $res->render("employee/employee_edit.php", [
+return $res->render("employee/employee_edit", [
     "types" => $this->makeFood(
         $req->getModel("Employee")->getTypes(),
         "id", "label",
@@ -495,7 +495,7 @@ form.createField({
 
 ```php
 // Controller
-return $res->render("project/manage.php", [
+return $res->render("project/manage", [
     "skills" => $this->makeFood(
         $req->getModel("Skill")->getAll(),
         "id", "name",

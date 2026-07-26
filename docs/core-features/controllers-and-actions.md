@@ -58,7 +58,7 @@ The following function `action_test` will be executed when requesting the path `
 
         // This action will be executed when requesting the path `{root}/Employee`
         public function action_index(Request $req, Response $res) {
-            return $res->render("employee/index.php");
+            return $res->render("employee/index");
         }
 
         // This action will be executed when requesting the path `{root}/Employee/list`
@@ -79,7 +79,7 @@ The following function `action_test` will be executed when requesting the path `
             }
 
             // Rendering the View with all Employees as Array
-            return $res->render("employee/employee_list.php", [
+            return $res->render("employee/employee_list", [
                 "employees" => $req->getModel("Employee")->getAll()
             ]);
         }
@@ -93,7 +93,7 @@ The following function `action_test` will be executed when requesting the path `
 
             $employee = $req->getModel("Employee")->getById($employeeId);
 
-            return $res->render("employee/employee_view.php", [
+            return $res->render("employee/employee_view", [
                 "employee" => $employee
             ]);
         }

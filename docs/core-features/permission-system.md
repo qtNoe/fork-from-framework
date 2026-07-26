@@ -23,32 +23,32 @@ So it is wise to call this at the very beginning of an action.
 public function action_view(Request $req, Response $res) {
     $req->checkPermission("employee.view");
 
-    return $res->render("employee/employee_view.php");
+    return $res->render("employee/employee_view");
 }
 ```
 ```php
 // Returns a bool if the user has the permission
 public function action_view(Request $req, Response $res) {
     if(!$req->checkPermission("employee.view", true)) { 
-        return $res->render("forbidden.php");
+        return $res->render("forbidden");
     }
 
-    return $res->render("employee/employee_view.php");
+    return $res->render("employee/employee_view");
 }
 ```
 ## Checking permissions while rendering the page
 To check if the requesting user has a permission, the user object in `$opt` can be used. It has a method called `checkPermission` that returns a boolean. **Note** that this is **another** method than `checkPermission` from the request object. This one does not redirect the user and can be used for example to determin if specific should be visible to the user on a page it generally has access to.
 
 ### View example:
-```php
+```blade
+@extends($layout)
 
-<?php return ["body" => function ($opt) { ?>
-
+@section("content")
     <!-- Returns a bool if the user has the permission -->
     <?php if($opt["user"]->checkPermission("employee.delete")) { ?>
         <button id="delete">Delete</button>
     <?php } ?>
 
     <!-- Remaining code -->
-<?php }]; ?>
+@endsection
 ```

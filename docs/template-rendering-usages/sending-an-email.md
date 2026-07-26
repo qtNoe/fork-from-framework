@@ -25,32 +25,30 @@ public function action_register(Request $req, Response $res) {
         $res->sendEmail(
             $email          ,                                         // Target address
             ["en" => "Welcome Mail", "de" => "Willkommens Mail"],     // Subject
-            "email_welcome.php",                                      // Path to the email view
+            "email_welcome",                                         // Path to the email view
             "en",                                                     // Language used in the email
             [
                 "email" => $email
             ],                                                        // Options
-            "employee/mail_layout.php"                                // Layout to use
+            "employee/mail_layout"                                    // Layout to use
         );
     }
 }
 ```
 
 ### Example Layout
-```php
-<?php return ["layout" => function($opt, $body, $head) { ?>
-    <html>
-        <head>
-            <meta charset="utf-8"/>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-            <?= $head($opt); ?>
-        </head>
-        <body>
-            Welcome <?= $opt["email"] ?>!
-            <?= $body($opt); ?>
-        </body>
-    </html>
-<?php }]; ?>
+```blade
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        @yield("head")
+    </head>
+    <body>
+        Welcome <?= $opt["email"] ?>!
+        @yield("content")
+    </body>
+</html>
 ```
 
 
@@ -62,8 +60,8 @@ Exmaple:
 $res->sendEmailToUser(
     1,                                                             // User ID
     ["en" => "New cooking recipes!", "de" => "Neue Kochrezepte!"], // Subject
-    "email_recipes.php",                                           // Path to the mail view
+    "email_recipes",                                              // Path to the mail view
     ["r1" => "Cake", "r2" => "Cookies!!!"],                        // Options
-    "layout/email_layout.php"                                      // Layout to use
+    "layout/email_layout"                                         // Layout to use
 );
 ```

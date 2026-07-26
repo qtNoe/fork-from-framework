@@ -18,7 +18,7 @@ public function action_chatgpt(Request $req, Response $res) {
 
     /* remaining code */
 
-    return $res->render("admin/chatgpt.php");
+    return $res->render("admin/chatgpt");
 }
 ```
 

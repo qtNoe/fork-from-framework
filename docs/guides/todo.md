@@ -111,8 +111,10 @@ INSERT INTO `todo` (`description`) VALUES
 <details>
     <summary>View</summary>
     list
-    ```html
-        <?php return ["body" => function ($opt) { ?>
+    ```blade
+        @extends($layout)
+
+        @section("content")
             <table>
                 <thead>
                     <tr>
@@ -172,7 +174,7 @@ INSERT INTO `todo` (`description`) VALUES
                     });
                 </script>
             <?php } ?>
-        <?php }]; ?>
+        @endsection
     ```
 </details>
 
@@ -188,37 +190,45 @@ With the help of the framework, creating a form is straightforward. This form co
 
 ## Creating a Form in a View
 To create a form in a view using ZubZet's framework, start by defining an HTML `div` element with an `id` attribute to serve as the container for the form:
-```html
-<?php return ["body" => function ($opt) { ?>
+```blade
+@extends($layout)
+
+@section("content")
     <div id="form"></div>
-<?php }]; ?>
+@endsection
 ```
 
 Next, include a JavaScript block within the view. This script block will be used to configure and define the form:
-```html
-<?php return ["body" => function ($opt) { ?>
+```blade
+@extends($layout)
+
+@section("content")
     <div id="form"></div>
     <script>
     </script>
-<?php }]; ?>
+@endsection
 
 ```
 
 To initialize the form, use the `Z.Forms.create` method from the framework's JavaScript API. The `dom` property specifies the container's ID:
-```html
-<?php return ["body" => function ($opt) { ?>
+```blade
+@extends($layout)
+
+@section("content")
     <div id="form"></div>
     <script>
         var form = Z.Forms.create({
             dom: "form",
         });
     </script>
-<?php }]; ?>
+@endsection
 ```
 
 Fields can now be added to the form. For example, to include a text input field for a task description, use the createField method. Define attributes such as `name`, `type`, `text`, and `required` to specify the field's behavior:
-``` html
-<?php return ["body" => function ($opt) { ?>
+```blade
+@extends($layout)
+
+@section("content")
     <div id="form"></div>
     <script>
         var form = Z.Forms.create({
@@ -232,7 +242,7 @@ Fields can now be added to the form. For example, to include a text input field 
             required: true,
         });
     </script>
-<?php }]; ?>
+@endsection
 ```
 ??? info "What does the attributes mean?"
     Each field's attributes serve specific purposes:

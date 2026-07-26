@@ -27,7 +27,7 @@ public function action_list(Request $req, Response $res) {
     }
 
     <!-- Remaining code -->
-    return $res->render("employee/list.php");
+    return $res->render("employee/list");
 }
 ```
 `$req->isAction()` detects if this Request was initiated by an async action call with a specified identifier. Note that these actions are not the same as the ones in the controller. They work a level higher. `$res->generateRest` will create a parsable answer for the client.
