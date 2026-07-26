@@ -2,8 +2,8 @@
 
     // Renders framework-shipped views (IncludedComponents/views/*) even when the test app
     // provides an override for the same name, so the framework versions get exercised.
-    // frameworkView() registers the framework views root as a highest-precedence one-shot
-    // finder (Engine::addViewPath) before the render, so the framework copy wins.
+    // frameworkView() sets Engine::$prioritizeFrameworkViews before the render, which flips the
+    // finder order to framework-first, so the framework copy wins.
     // Covered by tests/cypress/e2e/core/framework-views.cy.js.
 
     use ZubZet\Framework\Rendering\Katana\Engine;
@@ -12,8 +12,7 @@
 
         // Force the framework copy for the upcoming render, then reference the view by name.
         private function frameworkView(string $name): string {
-            $root = zubzet()->z_framework_root;
-            Engine::$testOverwriteViewPath =  "{$root}IncludedComponents/views/$name";
+            Engine::$prioritizeFrameworkViews = true;
             return $name;
         }
 
