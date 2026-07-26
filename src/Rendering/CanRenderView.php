@@ -4,88 +4,13 @@
 
     use ZubZet\Framework\Logger\Logger;
     use ZubZet\Framework\Logger\LogEventType;
-    use ZubZet\Framework\Rendering\ViewNotFoundException;
     use ZubZet\Framework\ErrorHandling\DebugBar\DebugBarBridge;
+    use ZubZet\Framework\Rendering\Katana\Engine;
+    use ZubZet\Framework\Rendering\Resolver\ViewPath;
 
     trait CanRenderView {
 
-        /**
-         * @internal
-         * Returns the path of a view. If the view does not exist, this function will fall back to the framework defaults.
-         * @param string $document Filename of the views
-         * @param bool $throwOnError Wether a ViewNotFoundException should be thrown when there is no fitting view or an error view is returned
-         * @return string Relative path to the view file
-         * @throws ViewNotFoundException when $throwOnError is set to true
-         */
-        public static function resolvePath(string $document, bool $throwOnError = false): string {
-            $document = rtrim($document);
-
-            // Since 1.3.0 views are Katana .blade.php documents. Strip a legacy ".php"
-            // or explicit ".blade.php" suffix down to the bare view name first, so a
-            // dot in the extension is never treated as a path separator below.
-            if(str_ends_with($document, ".blade.php")) {
-                $name = substr($document, 0, -strlen(".blade.php"));
-            } else if(str_ends_with($document, ".php")) {
-                $name = substr($document, 0, -strlen(".php"));
-            } else {
-                $name = $document;
-            }
-
-            // Resolution candidates, in order. The literal form preserves the historical
-            // behaviour (slash paths like "admin/users", already-rooted paths, and any
-            // real dotted filename). A bare Laravel-style dotted name ("admin.users")
-            // additionally resolves with dots as separators, but only as a fallback, so
-            // nothing that already resolves changes.
-            $candidates = [$name . ".blade.php"];
-            if(!str_contains($name, "/") && str_contains($name, ".")) {
-                $candidates[] = str_replace(".", "/", $name) . ".blade.php";
-            }
-
-            foreach($candidates as $candidate) {
-                $located = self::locateExistingView($candidate);
-                if($located !== null) {
-                    return $located;
-                }
-            }
-
-            // Handle when no view was found
-            if(!$throwOnError) {
-                return zubzet()->z_framework_root."IncludedComponents/views/500.blade.php";
-            }
-
-            throw new ViewNotFoundException("View file for '$document' not found. Is the path correct?");
-        }
-
-        /**
-         * @internal
-         * Probe user space then framework space for a relative (or already-rooted)
-         * ".blade.php" document, honouring userspace-overrides-framework precedence.
-         * @param string $document A ".blade.php" document (bare relative path or absolute)
-         * @return string|null Absolute path to the view, or null if neither space has it
-         */
-        private static function locateExistingView(string $document): ?string {
-            // Look for the view in the user space, don't readd the location if it is already present
-            $userSpaceLocationDocument = $document;
-            if(!str_starts_with($document, zubzet()->z_views)) {
-                $userSpaceLocationDocument = zubzet()->z_views . $document;
-            }
-
-            if(file_exists($userSpaceLocationDocument)) {
-                return $userSpaceLocationDocument;
-            }
-
-            // Look for the view in the framework space, also don't readd the location if it is already present
-            $frameworkLocationDocument = $document;
-            if(!str_starts_with($document, zubzet()->z_framework_root."IncludedComponents/views/")) {
-                $frameworkLocationDocument = zubzet()->z_framework_root."IncludedComponents/views/$document";
-            }
-
-            if(file_exists($frameworkLocationDocument)) {
-                return $frameworkLocationDocument;
-            }
-
-            return null;
-        }
+        use ViewPath;
 
         /**
          * Shows a document to the user
@@ -96,37 +21,12 @@
         public function render($document, $opt = [], $options = []) {
             // Legacy as $options used to be $layout
             if(!is_array($options)) {
-                $options = [
-                    "layout" => $options
-                ];
+                $options = ["layout" => $options];
             }
-
-            // This is used for logging $opt before it is merged with methods and references
-            $data = $opt;
 
             $layout = $options["layout"] ?? $this->resolveDefaultLayout();
             $viewPath = self::resolvePath($document);
             $layoutPath = self::resolvePath($layout);
-
-            //Set default parameter values
-            $opt["response"] = $this;
-            $opt["request"] = $this->booter->req;
-            $opt["root"] = $this->booter->rootFolder;
-            $opt["host"] = $this->booter->host;
-            $opt["absRoot"] = $this->booter->host.$this->booter->rootFolder;
-
-            if (!isset($opt["title"])) $opt["title"] = $this->getBooterSettings("pageName");
-
-            //logged in user information
-            $opt["user"] = $this->booter->user;
-
-            include_once zubzet()->z_framework_root."IncludedComponents/views/layout/layout_essentials.php";
-            $opt["layout_essentials_body"] = function($opt) {
-                essentialsBody($opt);
-            };
-            $opt["layout_essentials_head"] = function($opt, $customBootstrap = false) {
-                essentialsHead($opt, $customBootstrap);
-            };
 
             // Optional log view
             try {
@@ -142,34 +42,67 @@
                 // Do not log this render to avoid having to require a database
             }
 
-            DebugBarBridge::collectTemplate($document, $data, "php", $layout);
+            DebugBarBridge::collectTemplate($document, $opt, "blade", $layout);
 
-            //Load the document
-            $view = include($viewPath);
+            // Expand legacy $opt with framework variables, functions, and objects
+            // likely subject to deprecation in the future as the expansions overwrite
+            // the provided opt parameters.
+            $expansion = self::legacyOptExpansion($opt);
 
-            //Load the layout
-            $layout_url = $layout;
-            $layout = include($layoutPath);
+            // Render through Katana. The engine resolves by view name against its finder chain,
+            // so hand it the root-relative names. resolvePath already picked which file wins; the
+            // engine re-resolves the same name with the same userspace->framework precedence.
+            // Temporary: once resolution moves into the engine, resolvePath collapses to name
+            // normalization and viewName() below goes away.
+            echo Engine::render(
+                self::viewName($viewPath),
+                self::viewName($layoutPath),
+                array_merge($opt, $expansion),
+            );
+        }
 
-            $opt["generateResourceLink"] = function($url, $root = true) {
-                $v = $this->getBooterSettings("assetVersion");
-                echo (($root ? $this->booter->rootFolder : "") . $url . "?v=" . (($v == "dev") ? time() : $v));
+        /**
+         * Map a resolved absolute view path back to the root-relative Katana view name (no
+         * ".blade.php"), so the engine's finder chain re-resolves it. Temporary bridge while
+         * resolvePath still returns a path.
+         */
+        private static function viewName(string $absolutePath): string {
+            $roots = [
+                rtrim(zubzet()->z_views, "/"),
+                rtrim(zubzet()->z_framework_root . "IncludedComponents/views", "/"),
+            ];
+            foreach($roots as $root) {
+                if(str_starts_with($absolutePath, "$root/")) {
+                    return substr($absolutePath, strlen($root) + 1, -strlen(".blade.php"));
+                }
+            }
+            return substr(basename($absolutePath), 0, -strlen(".blade.php"));
+        }
+
+        private static function legacyOptExpansion(array $opt): array {
+            // Classes
+            $expansion["response"] = response();
+            $expansion["request"] = request();
+            $expansion["user"] = user();
+
+            // Variables
+            $expansion["root"] = zubzet()->rootFolder;
+            $expansion["host"] = zubzet()->host;
+            $expansion["absRoot"] = zubzet()->host . zubzet()->rootFolder;
+            $expansion["title"] = $opt["title"] ?? config("pageName", default: "ZubZet");
+
+            // Functions
+            $expansion["generateResourceLink"] = function($url, $root = true) {
+                $v = config("assetVersion");
+                echo (($root ? zubzet()->rootFolder : "") . $url . "?v=" . (($v == "dev") ? time() : $v));
             };
 
-            $opt["echo"] = function($val) {
+            $expansion["echo"] = function($val) {
                 echo nl2br(htmlspecialchars($val));
             };
 
-            //Makes $body and $head optional
-            if(!isset($view["body"])) $view["body"] = function(){};
-            if(!isset($view["head"])) $view["head"] = function(){};
-
-            ob_start();
-            $layout["layout"]($opt, $view["body"], $view["head"]);
-            $rendered = ob_get_contents();
-            ob_end_clean();
-
-            echo $rendered;
+            // All variables used to be found in $opt
+            return ["opt" => array_merge($opt, $expansion)];
         }
 
     }

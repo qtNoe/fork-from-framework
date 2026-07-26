@@ -298,9 +298,11 @@ framework's. Laravel solves this with `<x-package::component/>` (`anonymousCompo
   225 tests / 293 assertions OK. Risk is **low** - every change is additive, and a `::` name was
   previously unrepresentable (the tag regex had no colons), so no existing template can reach the new
   path.
-- **Why it is not usable yet:** #66 is stacked on **[#55](https://github.com/katanaphp/blade/pull/55)**
-  (it targets `feature/config-object`, not `master`), because a namespace is naturally a
-  `prefix -> ViewFinder` map and master has no `Config`/`ViewFinder`. So #55 must merge first, then #66.
+- **Status (in progress):** #55 (`Config` / `ViewFinder`) has since landed and is in the pinned
+  build, so the original blocker is cleared. A component-namespace PR (the `<x-zubzet::head/>`
+  support, successor to #66) is **actively in the works upstream**. Once it lands, the framework's
+  own components should move to a real `zubzet::` namespace so they can never be shadowed by an app
+  component (today they rely on the `components/zubzet/` sub-directory convention).
 - **TODO once #55 and #66 land:** bump the pin past them and switch the essentials from
   `<x-zubzet.head/>` to `<x-zubzet::head/>`. That is a one-line change in the converter
   (`LegacyViewConverter::essentialsTags()`), the two component files' location, and the six layouts.
@@ -317,10 +319,11 @@ there is **no collision** with the framework's global `e()`. The framework's `e(
 
 ## How the framework integrates today (the lean adapter)
 
-- `src/Rendering/KatanaRenderer.php` (~50 lines) - the only Katana-specific glue: a fresh `Blade` per
-  render (change-point 2), rooted where the layout resolves (change-point 4), the framework's own
-  component path registered (change-point 10), and `$layout` handed over as render data. It no longer
-  rewrites or composes views at all.
+- `src/Rendering/Katana/` - the only Katana-specific glue: `Engine.php` (the adapter: a fresh `Blade`
+  per render (change-point 2), rooted where the layout resolves (change-point 4), the framework's own
+  component path registered (change-point 10), and `$layout` handed over as render data), `Hooks.php`
+  (framework directives/callbacks bound to the request, currently `@auth` / `@guest`, expected to grow),
+  and `ExactFileViewFinder.php` (the pinned finder). It no longer rewrites or composes views at all.
 - `src/Rendering/CanRenderView.php` - `resolvePath()` now targets `.blade.php`; `render()` still
   builds the same `$opt` contract. No second renderer, no closure fallback (per the "Blade-only"
   decision), and no `layout_essentials_*` closures: the essentials are the framework's own Blade
@@ -328,6 +331,52 @@ there is **no collision** with the framework's global `e()`. The framework's `e(
 - `src/Support/Helpers.php` - `e()` delegates to `\Blade\e()`.
 - `patches/` - **removed**. Both Katana fixes are upstream now (#56 PHP 8.0, #57 `@extends` data), so
   `vendor/` is used exactly as `composer install` leaves it; there is no longer a patch step.
+
+### Adapter internals (detail moved out of the source comments)
+
+The adapter classes keep only short comments; the reasoning lives here.
+
+**`ExactFileViewFinder` — pinning a resolved file to a synthetic name.** The framework resolves
+a view and its layout to absolute paths through its own userspace-overrides-framework
+precedence, and sometimes deliberately forces the framework copy even when a userspace override
+exists. Katana resolves views *by name*, so registering the real roots would let Katana
+re-resolve that name with its own precedence and possibly pick a different file. `Engine`
+therefore wraps each already-resolved file in an `ExactFileViewFinder` under a synthetic,
+path-unique name (`__zubzet_entry_<md5>` / `__zubzet_layout_<md5>`) and registers it *before* the
+`FileSystemViewFinder` for the layout root, so Katana renders exactly the chosen file while the
+root still resolves the layout's own `@extends` chain, includes and components.
+
+**Compiled-view cache collision (why the synthetic name also helped).** Katana keyed a compiled
+view on `sha1(name . lastModified)` with **no path**, so two files sharing a view name and mtime
+collide in the shared on-disk cache — exactly the userspace-override vs framework-copy case on a
+fresh checkout (equal mtimes). Pinning each file to a path-unique synthetic name sidestepped it.
+Fixed upstream by [katanaphp/blade#71](https://github.com/katanaphp/blade/pull/71), which adds
+`ViewFinder::identity()` (mixed into the cache key). `ExactFileViewFinder::identity()` returns the
+resolved file path (already unique per source). It is intentionally declared **without
+`#[Override]`** so the class stays valid both on the current `master` (no such abstract yet) and
+once #71 lands on the pinned branch — `#[Override]` is enforced on PHP 8.3+ and would fatal
+against a master that lacks the abstract.
+
+**`@auth` / `@guest` binding.** `Hooks` (wired in by `Engine` via `Hooks::register($config)`) binds
+Katana's auth callback (`Config::setAuthCallback`, which registers both `@auth` and `@guest`) to the
+current request.
+Laravel's directive argument is a *guard* name, which has no analogue here, so the argument is
+reinterpreted as a framework **permission** (dotted, wildcard-aware); `@guest` is the negation:
+
+- `@auth` — is the user logged in
+- `@auth("x.y")` — has permission `x.y`
+- `@guest` / `@guest("x.y")` — negation of the above
+
+**View-name resolution (`CanRenderView::resolvePath`).** Resolution tries candidates in order.
+The literal form is tried first and preserves the historical behaviour: slash paths like
+`admin/users`, already-rooted absolute paths, and any real dotted filename. Only if that misses,
+and the name has a dot but no slash, is a bare Laravel-style dotted name (`admin.users`) retried
+with dots as path separators. The dotted form is strictly a fallback, so nothing that already
+resolves changes. (Katana's own `FileSystemViewFinder` splits dots natively, so if resolution
+ever moves fully into the finders, this fallback becomes redundant.)
+
+The compiled-view cache directory is additionally keyed on the installed engine reference; see
+change-point 9.
 
 ## Migrator (version-migrator v1.3)
 

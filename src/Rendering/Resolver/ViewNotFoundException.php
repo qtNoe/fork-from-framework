@@ -1,6 +1,6 @@
 <?php
 
-    namespace ZubZet\Framework\Rendering;
+    namespace ZubZet\Framework\Rendering\Resolver;
 
     class ViewNotFoundException extends \RuntimeException {}
 

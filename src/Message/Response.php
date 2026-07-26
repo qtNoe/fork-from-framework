@@ -3,16 +3,16 @@
     namespace ZubZet\Framework\Message;
 
     use PHPMailer\PHPMailer\PHPMailer;
-    use ZubZet\Framework\Authentication\Session;
+
     use ZubZet\Framework\Form\Upload;
     use ZubZet\Framework\Support\Rest;
-    use ZubZet\Framework\Rendering\CanRenderView;
-    use ZubZet\Framework\Rendering\HandlesDefaultLayout;
-    use ZubZet\Framework\Form\Validation\Result;
-    use ZubZet\Framework\Logger\LogEventType;
     use ZubZet\Framework\Logger\Logger;
+    use ZubZet\Framework\Logger\LogEventType;
     use ZubZet\Framework\Message\Output\State;
-
+    use ZubZet\Framework\Form\Validation\Result;
+    use ZubZet\Framework\Authentication\Session;
+    use ZubZet\Framework\Rendering\CanRenderView;
+    use ZubZet\Framework\Rendering\Resolver\DefaultLayout;
 
     /**
      * @var object $opt Holds options needed for rendering
@@ -25,7 +25,7 @@
     class Response extends RequestResponseHandler {
 
         use CanRenderView;
-        use HandlesDefaultLayout;
+        use DefaultLayout;
 
         public State $output;
 

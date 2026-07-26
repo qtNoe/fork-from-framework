@@ -1,6 +1,6 @@
 <?php
 
-    namespace ZubZet\Framework\Rendering;
+    namespace ZubZet\Framework\Rendering\Resolver;
 
     /**
      * Default-layout management for Response.
@@ -15,7 +15,7 @@
      * "part of the app" - admin area, nested component - can install its
      * own default and restore the previous one when done.
      */
-    trait HandlesDefaultLayout {
+    trait DefaultLayout {
 
         private static array $globalDefaultLayoutStack = [];
         private array $instanceDefaultLayoutStack = [];
