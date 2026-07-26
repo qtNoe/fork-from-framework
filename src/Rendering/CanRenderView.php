@@ -58,7 +58,7 @@
                 echo (string) Engine::render($viewName, $layoutName, $data);
             } catch(BladeException $e) {
                 // Render the 500 page when a view is not found
-                echo (string) Engine::render("500", $layoutName, $data);
+                echo (string) Engine::render("500", "layout/min_layout", $data);
             }
         }
 
