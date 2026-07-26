@@ -1,6 +1,12 @@
 @extends($layout)
 
 @section("content")
+    {{-- Marks this as the userspace copy of `login`; the framework ships its own
+         at IncludedComponents/views/login.blade.php. core/view-resolution asserts
+         this marker is present by default (userspace wins) and absent when the
+         framework copy is forced via the escape hatch. --}}
+    <span data-test="login-source" hidden>app</span>
+
     <div id="login-error-label" data-test="error"></div>
 
     <input type="email" id="username" data-test="username">
