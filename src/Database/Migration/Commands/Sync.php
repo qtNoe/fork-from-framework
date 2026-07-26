@@ -151,22 +151,6 @@
             try {
 
                 foreach($pendingMigrations as $file) {
-                    $file->extractData();
-
-                    // Check specific environment mismatch
-                    if(!empty($includedEnvironments) && !in_array($file->environment, array_unique([
-                        "default",
-                        ...$includedEnvironments
-                    ]))) {
-                        $out->writeln("<info>Skipping migration (not in included environments): {$file->filename}</info>");
-                        continue;
-                    }
-
-                    if(!empty($excludedEnvironments) && in_array($file->environment, $excludedEnvironments)) {
-                        $out->writeln("<info>Skipping migration (in excluded environments): {$file->filename}</info>");
-                        continue;
-                    }
-
                     // Check start date/version
                     if($startDate) {
                         if($file->date < $startDateObj) {
@@ -196,10 +180,30 @@
                         }
                     }
 
-                    $out->writeln("<info>Synchronizing migration: {$file->filename}</info>");
+                    // Do not load the file in dry mode: extracting data
+                    // from a PHP migration would already run its execute().
+                    if($dryMode) {
+                        $out->writeln("<info>Synchronizing migration: {$file->filename}</info>");
+                        continue;
+                    }
 
-                    // Do not execute in dry mode
-                    if($dryMode) continue;
+                    $file->extractData();
+
+                    // Check specific environment mismatch
+                    if(!empty($includedEnvironments) && !in_array($file->environment, array_unique([
+                        "default",
+                        ...$includedEnvironments
+                    ]))) {
+                        $out->writeln("<info>Skipping migration (not in included environments): {$file->filename}</info>");
+                        continue;
+                    }
+
+                    if(!empty($excludedEnvironments) && in_array($file->environment, $excludedEnvironments)) {
+                        $out->writeln("<info>Skipping migration (in excluded environments): {$file->filename}</info>");
+                        continue;
+                    }
+
+                    $out->writeln("<info>Synchronizing migration: {$file->filename}</info>");
 
                     model("z_migration")->markAsExecuted($file->filename, $file->date->format("Y-m-d"), $file->version);
                 }

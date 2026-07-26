@@ -167,6 +167,13 @@
 
             try {
                 foreach($pendingMigrations as $file) {
+                    // Do not load the file in dry mode: extracting data
+                    // from a PHP migration would already run its execute().
+                    if($dryMode) {
+                        $out->writeln("<info>Importing migration: {$file->filename}</info>");
+                        continue;
+                    }
+
                     $file->extractData();
 
                     // Check specific environment mismatch
@@ -185,8 +192,6 @@
 
                     if($file->skip) {
                         $out->writeln("<info>Skipping migration (marked to skip): {$file->filename}</info>");
-
-                        if($dryMode) continue;
                         model("z_migration")->markAsExecuted($file->filename, $file->date->format("Y-m-d"), $file->version);
 
                         continue;
@@ -199,9 +204,6 @@
                     }
 
                     $out->writeln("<info>Importing migration: {$file->filename}</info>");
-
-                    // Do not execute in dry mode
-                    if($dryMode) continue;
 
                     // Execute SQL
                     try {
