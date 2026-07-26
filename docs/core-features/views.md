@@ -35,4 +35,4 @@ public function action_index(Request $req, Response $res) {
 <?php }]; ?>
 ```
 
-More examples for views can be found in [`z_framework/default/views`](https://git.zierhut-it.de/Zierhut-IT/z_framework/src/branch/DEV/default/views).
+More examples for views can be found in the framework's `src/IncludedComponents/views` directory.

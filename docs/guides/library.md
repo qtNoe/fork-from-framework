@@ -202,7 +202,7 @@ Open your browser and navigate to the admin panel at `http://localhost:8080/z`.
 2) **Login In as Admin**  
 Use the default administrator credentials:
 
-- Email: `admin@zierhut-it.de`
+- Email: `admin@zubzet.com`
 - Password: `password`
 
 3) **Create a New Role**  
