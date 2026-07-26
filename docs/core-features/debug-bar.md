@@ -18,8 +18,8 @@ If `execution_type` is anything other than `test` (including unset), the bar is 
 
 The bar relies on the layout calling the body essentials. The default layout already does this. If you ship a custom layout and want the bar visible there too, include the body essentials inside your `<body>`:
 
-```php
-<?php $opt["layout_essentials_body"]($opt); ?>
+```blade
+<x-zubzet::body :opt="$opt"/>
 ```
 
 ## What you see

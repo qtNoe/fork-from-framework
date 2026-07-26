@@ -35,12 +35,12 @@ public function action_employee(Request $req, Response $res) {
         // Retrieves the second URL parameter (offset 1, length 1), which is the employeeId
         $employeeId = $req->getParameters(1, 1);
 
-        return $res->render("employee/employee_view.php", [
+        return $res->render("employee/employee_view", [
             "employee" => $req->getModel("Employee")->getEmployeeById($employeeId)
         ]);
     }
 
-    return $res->render("employee/list.php");
+    return $res->render("employee/list");
 }
 ```
 

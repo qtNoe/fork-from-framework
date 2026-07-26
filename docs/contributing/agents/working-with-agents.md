@@ -64,20 +64,21 @@ A few inter-phase dependencies that are not obvious:
 
 ZubZet uses convention-based routing with FastRoute as an opt-in override. The path `["dashboard", "stats"]` maps to `DashboardController->action_stats($req, $res)`. Default action is `action_index`; missing methods fall to `action_fallback`. See [MVC](../../core-features/mvc.md), [Controllers and Actions](../../core-features/controllers-and-actions.md), and [Routing](../../core-features/routing.md).
 
-A view file returns an associative array of head/body closures:
+A view is a Blade template that extends a layout and defines head/content sections:
 
-```php
-<?php return [
-    "head" => function($opt) { ?>
-        <link rel="stylesheet" href="...">
-    <?php },
-    "body" => function($opt) { ?>
-        <h1><?= $opt["title"] ?></h1>
-    <?php }
-]; ?>
+```blade
+@extends($layout)
+
+@section("head")
+    <link rel="stylesheet" href="...">
+@endsection
+
+@section("content")
+    <h1><?= $opt["title"] ?></h1>
+@endsection
 ```
 
-Rendered via `$res->render("path/to/view.php", $vars, "layout/…")` or the `view()` global helper.
+Rendered via `$res->render("path/to/view", $vars, "layout/…")` or the `view()` global helper.
 
 ## Global helpers
 

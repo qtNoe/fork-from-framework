@@ -227,7 +227,7 @@ public function action_manage(Request $req, Response $res) {
         ]);
     }
 
-    return $res->render("employee/employee_edit.php", [
+    return $res->render("employee/employee_edit", [
         "employee" => $employee,
         "types" => $this->makeFood(
             $req->getModel("Employee")->getTypes(),
@@ -413,7 +413,7 @@ This feature leverages a function called makeFood, which is used in the controll
 
 ```php
 // Controller
-return $res->render("employee/employee_edit.php", [
+return $res->render("employee/employee_edit", [
     "types" => $this->makeFood(
         $req->getModel("Employee")->getTypes(),
         "id", "label",
@@ -495,7 +495,7 @@ form.createField({
 
 ```php
 // Controller
-return $res->render("project/manage.php", [
+return $res->render("project/manage", [
     "skills" => $this->makeFood(
         $req->getModel("Skill")->getAll(),
         "id", "name",
