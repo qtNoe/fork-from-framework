@@ -80,6 +80,17 @@ A view is a Blade template that extends a layout and defines head/content sectio
 
 Rendered via `$res->render("path/to/view", $vars, "layout/…")` or the `view()` global helper.
 
+## Render engine (Katana)
+
+Views render through [Katana](https://github.com/katanaphp/blade), a standalone Blade compiler. It is Blade only, with no closure fallback. The user-facing reference is [Views](../../core-features/views.md).
+
+The only Katana-specific glue is `src/Rendering/Katana/`:
+
+- `Engine.php` is the adapter. It registers the two view roots as an ordered finder chain (userspace `z_views` first, then framework `IncludedComponents/views`), so a name resolves userspace-overrides-then-framework and `@extends` / `@include` / components all resolve across both roots. It builds a fresh `Blade` per render so `@section` state cannot leak between renders, registers the framework essentials under the `zubzet` component namespace (`<x-zubzet::head/>` and `<x-zubzet::body/>`, which an app component can neither shadow nor be shadowed by), and hands the layout name over as the `$layout` render datum.
+- `Hooks.php` binds request-scoped directives, currently `@auth` and `@guest`. The argument is a framework permission (dotted, wildcard aware), and `@guest` is the negation. This is where future framework directives go.
+
+`src/Rendering/CanRenderView.php` builds the `$opt` contract, logs the render and feeds the debug bar, then renders through the engine. A missing view or layout is caught (`BladeException`) and re-rendered as the framework 500 page in the guaranteed `layout/min_layout`. View names resolve by name (a legacy `.php` or `.blade.php` extension is stripped; dot and slash notation both work), and the compiled-view cache directory is keyed on the installed engine reference so an engine upgrade starts from a clean cache. `e()` (in `src/Support/Helpers.php`) delegates to `\Blade\e()`, so it escapes identically to `{{ }}`.
+
 ## Global helpers
 
 Defined in `src/Support/GlobalReferences.php`, all wrapped with `FunctionConflictResolution::requireAndThen` so they can't be redeclared:

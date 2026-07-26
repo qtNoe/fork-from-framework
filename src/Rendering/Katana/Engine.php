@@ -15,7 +15,7 @@
      * framework root) with the same userspace-then-framework precedence the framework uses
      * everywhere. A fresh Blade per render keeps @section state from leaking across renders.
      *
-     * Full rationale: docs/contributing/katana-integration-findings.md (Adapter internals).
+     * Full rationale: docs/contributing/agents/working-with-agents.md (Render engine).
      */
     class Engine {
 

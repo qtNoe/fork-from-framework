@@ -9,7 +9,7 @@
      * request context. Today this is only @auth / @guest, but this is the home for every
      * future framework directive/callback, so it is expected to grow.
      *
-     * See docs/contributing/katana-integration-findings.md (Adapter internals).
+     * See docs/contributing/agents/working-with-agents.md (Render engine).
      */
     class Hooks {
 
