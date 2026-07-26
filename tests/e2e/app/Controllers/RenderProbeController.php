@@ -70,16 +70,25 @@
         // -- Not-found fallback -------------------------------------------------
 
         // A missing view is caught in CanRenderView and re-rendered as the
-        // framework 500 page, in the caller's layout (here the default).
+        // framework 500 page in the guaranteed framework layout/min_layout.
         public function action_missingView(Request $req, Response $res) {
             return $res->render("renderprobe/this-view-does-not-exist-xyz", ["data" => "x"]);
         }
 
-        // Same fallback, but through the chrome-free layout/empty, so the 500
-        // body renders without page framing (proves the fallback threads the
-        // caller's layout, not a hardcoded one).
-        public function action_missingViewRaw(Request $req, Response $res) {
-            return $res->render("renderprobe/this-view-does-not-exist-xyz", ["data" => "x"], "layout/empty");
+        // A present view whose layout is missing: the @extends($layout) fails, and
+        // because the 500 fallback ignores the caller's layout, it still renders.
+        public function action_validViewMissingLayout(Request $req, Response $res) {
+            return $res->render("core/render", ["data" => "x"], "layout/this-layout-does-not-exist-xyz");
+        }
+
+        // The double fault: BOTH the view and its layout are missing. The
+        // guaranteed-layout fallback still renders the 500 page.
+        public function action_missingViewAndLayout(Request $req, Response $res) {
+            return $res->render(
+                "renderprobe/this-view-does-not-exist-xyz",
+                ["data" => "x"],
+                "layout/this-layout-does-not-exist-xyz",
+            );
         }
 
     }
