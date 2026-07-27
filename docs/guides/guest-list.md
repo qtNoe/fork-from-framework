@@ -33,7 +33,7 @@ INSERT INTO `guest` (`first_name`, `last_name`, `email`) VALUES
 
 ## Setting up the Database
 ??? info "What is Migration and what is Seed?"
-    **Migration** refers to the process of modifying a database's structure, such as adding, removing, or altering tables and columns. Migration files document these changes and allow them to be applied automatically across different environments, ensuring the database structure remains consistent and versioned.
+    **[Migration](../core-features/migrations/index.md)** refers to the process of modifying a database's structure, such as adding, removing, or altering tables and columns. Migration files document these changes and allow them to be applied automatically across different environments, ensuring the database structure remains consistent and versioned.
 
     **Seeding** is the process of populating a database with sample or test data. It is commonly used in development and testing environments to provide realistic data for testing or to initialize the database with predefined values for consistency. Seeding is often used alongside migrations to set up the database.
 To define the database structure, go to the `database/migrations` folder. Create a file named `[DATE]_guest.sql`, replacing `[DATE]` with the current date in the format `YYYY-MM-DD`. Then, paste the `CREATE TABLE` statement from the Resources section into the file. 
@@ -115,8 +115,8 @@ The function name is up to you, but adhering to meaningful, consistent names is 
 
 ### Explanation
 1. **SQL Query**: Define the SQL query to retrieve the data.  
-2. **Execute Query**: Use the exec function to execute the query.  
-3. **Process Results**: Convert the query results into an array with resultToArray.  
+2. **Execute Query**: Use the [exec](../api/classes/ZubZet-Framework-Core-Model.html#method_exec) function to execute the query.  
+3. **Process Results**: Convert the query results into an array with [resultToArray](../api/classes/ZubZet-Framework-Core-Model.html#method_resultToArray).  
 4. **Return Data**: Return the guest list for further use.
 
 ## Connecting the Controller and Model
@@ -173,7 +173,7 @@ A controller doesn't always need to render a view. It can handle tasks like proc
 
 
 ### Explanation
-- **render**: Use this method to render a view file.
+- **[render](../api/classes/ZubZet-Framework-Rendering-CanRenderView.html#method_render)**: Use this method to render a view file.
 - **Variables**: Pass variables (like the guest list) as the second parameter to make them available in the view.
 
 ## Displaying Guests in the View

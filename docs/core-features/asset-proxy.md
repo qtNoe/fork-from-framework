@@ -1,7 +1,7 @@
 # Asset Proxy
 
 Since version **1.2.0**, ZubZet serves CSS, JavaScript, fonts, and other static assets through an
-**asset proxy** instead of exposing them as files in your web root. A single internal route resolves
+**[asset proxy](../api/classes/ZubZet-Framework-Resources-AssetProxy.html)** instead of exposing them as files in your web root. A single internal route resolves
 each request against a list of registered source directories, which means framework- and
 package-bundled assets no longer have to be copied into every project.
 
@@ -18,7 +18,7 @@ first registered source that contains it.
 
 ## Referencing assets in views
 
-Use the `generateResourceLink` helper available on every view's `$opt` array — it builds a correct,
+Use the `generateResourceLink` helper available on every [view's](views.md) `$opt` array — it builds a correct,
 root-relative URL for you:
 
 ```blade
@@ -51,7 +51,7 @@ packages — no files are copied into your project.
 ## Registering your own source
 
 To expose an additional directory (for example, assets shipped by one of your own Composer packages),
-register it on the proxy with an absolute path and an optional URL prefix:
+[register it on the proxy](../api/classes/ZubZet-Framework-Resources-AssetProxy.html#method_registerWebRootSource) with an absolute path and an optional URL prefix:
 
 ```php
 zubzet()->assetProxy->registerWebRootSource("/var/www/vendor/acme/ui-kit/dist", "ui-kit");
@@ -69,5 +69,5 @@ The proxy is designed to serve only files that live inside a registered source:
   result stays within the registered source directory, so `../` sequences and symlink escapes cannot
   reach files outside the mount.
 - **Only readable, existing files are served**; anything else returns `404`.
-- **Content types are detected** with `league/mime-type-detection`, falling back to
+- **[Content types are detected](https://github.com/thephpleague/mime-type-detection)** with `league/mime-type-detection`, falling back to
   `application/octet-stream` when the type is unknown.

@@ -6,7 +6,7 @@ A view contains the HTML the user should see, along with the CSS, images and Jav
 Database access and heavy logic should not be used in the view, as that belongs into other parts of the application.
 
 ## The render engine
-Since v1.3.0 ZubZet renders views with [Katana](https://github.com/katanaphp/blade), a standalone implementation of the [Blade](https://laravel.com/docs/13.x/blade) templating language. A view is a `.blade.php` file placed in your project's `z_views` directory, otherwise it will not be found when called from the render method.
+Since v1.3.0 ZubZet renders views with [Katana](https://github.com/katanaphp/blade), a standalone implementation of the [Blade](https://laravel.com/docs/13.x/blade) templating language. A view is a `.blade.php` file placed in your project's `z_views` directory, otherwise it will not be found when called from the [render method](../api/classes/ZubZet-Framework-Rendering-CanRenderView.html#method_render).
 
 Blade gives you a concise syntax for the things you do in every template: escaping output, loops, conditionals, reusable components and page inheritance. This page covers the parts you reach for day to day, which is most of what you need. For the complete directive reference, the [Laravel Blade documentation](https://laravel.com/docs/13.x/blade) is the final backstop (Katana implements the common Blade set, see [Not available in Katana](#not-available-in-katana)).
 
@@ -22,7 +22,7 @@ A view extends a layout and fills in its content:
     <h1>Hello World</h1>
 @endsection
 ```
-`@extends($layout)` plugs the view into the layout the controller chose. The framework passes the layout name in as `$layout`, so you never hardcode it. `@section("content")` is the main body, and the layout decides where it lands. An optional `@section("head")` adds page specific tags to the document `<head>` (a stylesheet, a meta tag). Read more about how the two fit together in [Layouts](layouts.md).
+`@extends($layout)` plugs the view into the layout the [controller](controllers-and-actions.md) chose. The framework passes the layout name in as `$layout`, so you never hardcode it. `@section("content")` is the main body, and the layout decides where it lands. An optional `@section("head")` adds page specific tags to the document `<head>` (a stylesheet, a meta tag). Read more about how the two fit together in [Layouts](layouts.md).
 
 ## Passing data
 Whatever you pass to `render` is available in the view, both as a top level variable and inside the `$opt` array:

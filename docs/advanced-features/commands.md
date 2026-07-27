@@ -1,5 +1,5 @@
 ## Creating a command
-The current implementation simply uses the already existing controller structure. Nothing extra needed to do.
+The current implementation simply uses the already existing [controller structure](../core-features/controllers-and-actions.md). Nothing extra needed to do.
 
 ## Running a command
 To run a command, simply use: `php index.php run <controller> <action> <param1> ...` 

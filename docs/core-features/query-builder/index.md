@@ -9,7 +9,7 @@ The Query Builder allows you to build SQL queries programmatically in a safe and
 
 ## How it works
 
-Inside a [model](../models.md), you can now use helper methods like `select`, `update`, `delete`, and `insert`.
+Inside a [model](../models.md), you can now use [helper methods](../../api/classes/ZubZet-Framework-QueryBuilder-CanBuildQuery.html) like `select`, `update`, `delete`, and `insert`.
 These methods internally delegate to the CakePHP Query Builder.
 
 Example methods inside a model:
@@ -40,7 +40,7 @@ public function getQueryBuilder() {
 
 ## Executing Queries
 
-Once you have built a query, you can execute it with the `exec` method:
+Once you have built a query, you can execute it with the [`exec`](../../api/classes/ZubZet-Framework-Core-Model.html#method_exec) method:
 ```php
 
 $query = $this->dbSelect(...);

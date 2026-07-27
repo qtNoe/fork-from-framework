@@ -74,10 +74,10 @@ To start working with emails, we first need the basic structure of our applicati
     To verify if your emails are being sent correctly, you can navigate to `localhost:3300`. This is a default interface for email testing, which are commonly used in development environments to capture and inspect outgoing emails without actually sending them.
 
 
-Before sending emails, configure your SMTP server. The configuration is located in the `z_config/z_settings.ini` file, where parameters like `mail_smtp` need to be set up.
+Before sending emails, configure your SMTP server. The [configuration](../core-features/configuration.md) is located in the `z_config/z_settings.ini` file, where parameters like `mail_smtp` need to be set up.
 
 ## Sending Emails
-Emails are sent from controllers, and the ZubZet framework provides two methods for this purpose:
+Emails are sent from [controllers](../core-features/controllers-and-actions.md), and the ZubZet framework provides [two methods](../template-rendering-usages/sending-an-email.md) for this purpose:
 
 1. `sendEmail`: This method allows you to send an email to a custom email address. It accepts the following parameters:
 
