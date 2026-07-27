@@ -100,7 +100,7 @@ logger("orders")->info("Order placed", [
 
 In the bar this expands into rows for `context.orderId`, `context.userId`, `context.total`, alongside the framework's own `extra.traceId`, `extra.file`, and friends.
 
-See the [Logging documentation](logging) for details on channels, processors, and custom loggers.
+See the [Logging documentation](logging.md) for details on channels, processors, and custom loggers.
 
 ## Example
 

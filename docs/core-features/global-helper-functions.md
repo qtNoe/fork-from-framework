@@ -126,7 +126,7 @@ Returns a Monolog logger instance for the given channel.
 
 * **$name**: The channel name. Defaults to `"app"` if omitted.
 
-Loggers are created on first use and cached for subsequent calls with the same name. See [Logging](core-features/logging.md) for full configuration details.
+Loggers are created on first use and cached for subsequent calls with the same name. See [Logging](logging.md) for full configuration details.
 
 **Example:**
 

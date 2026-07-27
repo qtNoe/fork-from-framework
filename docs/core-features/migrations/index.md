@@ -346,7 +346,7 @@ The Seed system supports **two different file formats**, which can be mixed free
     **QueryBuilder Usage:**  
     PHP seed files utilize **CakePHP\Database** for building queries.
 
-    For more detailed information about the Query Builder, see: [QueryBuilder](/docs/core-features/query-builder/)
+    For more detailed information about the Query Builder, see: [QueryBuilder](../query-builder/index.md)
 
     **Registering Queries**  
     To ensure reliable execution, every query **must be explicitly registered** within the system.

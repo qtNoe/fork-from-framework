@@ -5,11 +5,11 @@ It is not 100% necessary to use a framework, but especially raw PHP code is usua
 ## Using MVC
 Using this framework effectively, you must understand the MVC pattern, which consists of:
 
-1. [Controllers](core-features/controllers-and-actions) handle all the logic within your program. They do the actual computational work.
+1. [Controllers](core-features/controllers-and-actions.md) handle all the logic within your program. They do the actual computational work.
 
-2. [Models](core-features/models) handle all interactions with your data structure. This could be referring to a database as well as file or else.
+2. [Models](core-features/models.md) handle all interactions with your data structure. This could be referring to a database as well as file or else.
 
-3. [Views](core-features/views) are basically templates of your content, which get propagated with the results of your controllers.
+3. [Views](core-features/views.md) are basically templates of your content, which get propagated with the results of your controllers.
 
 ## API reference
 This documentation provides a general overview about most features and best practice related topics, but if you need something more technical that explains every file, class, method and their parameters, please refer to the [API Reference](./api).

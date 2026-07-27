@@ -67,5 +67,5 @@ $this->exec($sql, "si", "Klaus", 30);
 
     If you always use exec with the question marks in your queries, you save yourself from a lot of headaches.
 
-    Learn more about SQL injections from the <a href="httpds://www.php.net/manual/en/security.database.sql-injection.php">official PHP documentation</a>. An interesting and even partly entertaining read.
+    Learn more about SQL injections from the <a href="https://www.php.net/manual/en/security.database.sql-injection.php">official PHP documentation</a>. An interesting and even partly entertaining read.
 

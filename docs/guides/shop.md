@@ -1,5 +1,5 @@
 # Shop Application
-In the [last guide](library), we explored how to enhance your website's security by implementing roles and permissions to restrict user access effectively.
+In the [last guide](library.md), we explored how to enhance your website's security by implementing roles and permissions to restrict user access effectively.
 
 In this guide, we’ll focus on handling backend requests in your application. Using a Shop example, we will demonstrate how to implement functionality for removing data from the database, triggered by a delete button on the page. This will provide you with the foundation for managing interactive actions securely and efficiently.
 
@@ -457,7 +457,7 @@ In this case, since the request is successful, we use `$res->success()` and retu
 ?>
 ```
 
-This ensures a clear response is sent to the frontend, confirming whether the deletion was successful, and prevents unnecessary processing after the response. For additional response options, refer to the [REST API documentation](../core-features/rest-api).
+This ensures a clear response is sent to the frontend, confirming whether the deletion was successful, and prevents unnecessary processing after the response. For additional response options, refer to the [REST API documentation](../core-features/rest-api.md).
 
 ## Why Set `active = 0` Instead of Deleting the Product from the Database?
 The `deleteProduct` function in our `ShopModel` is implemented as follows:
