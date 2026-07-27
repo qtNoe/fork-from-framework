@@ -54,7 +54,7 @@ The framework also injects a set of helpers into `$opt` for every render: `$opt[
 {{-- this is a comment and is not rendered --}}
 {{ $title ?? "Untitled" }}   {{-- any PHP expression works inside the braces --}}
 ```
-`{{ }}` escapes its output the same way the framework's `e()` helper does, so it is safe for user input by default. Use `{!! !!}` only for HTML you trust.
+`{{ }}` escapes its output the same way the framework's [`e()` helper](global-helper-functions.md#e) does, so it is safe for user input by default. Use `{!! !!}` only for HTML you trust.
 
 ## Conditionals
 ```blade

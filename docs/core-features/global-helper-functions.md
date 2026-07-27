@@ -156,3 +156,19 @@ Renders a [view template](views.md) directly.
 view("adminpanel/dashboard");
 
 ```
+
+### `e()`
+
+Escapes a string for safe HTML output. It strips tags and then escapes the remaining special characters through the render engine, so its output matches what `{{ }}` produces in a [view](views.md).
+
+**Syntax:** `e(?string $value): ?string`
+
+* **$value**: The string to escape. `null` is passed through unchanged, so optional values can be escaped without an extra check.
+
+Use it whenever a value ends up in HTML outside of a template echo, for example in attributes built in PHP.
+
+**Example:**
+
+```php
+<a title="<?= e($opt["title"]) ?>">
+```
