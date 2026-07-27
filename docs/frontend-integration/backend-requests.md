@@ -1,5 +1,5 @@
 # Using Z.Request
-The default JavaScript API of this framework does have a function to send asynchronous requests to the server and get data back.
+The default JavaScript API of this framework does have a function to send asynchronous requests to the server and get data back. `Z.Request` is part of Z.js, the framework's bundled frontend script, which is included automatically in every properly set up [layout](../core-features/layouts.md).
 ## Front-end
 ```js
 $(".delete-employee").click(function() {

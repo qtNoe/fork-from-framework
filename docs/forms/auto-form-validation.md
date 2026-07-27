@@ -1,7 +1,7 @@
 # Auto form validation and database updates
 This framework has the ability to create automatic generated forms with user feedback. These forms can be validated automatically on the server and if errors occur the feedback is sent back to the user. If no errors occur the data can be used to update a database table.
 ## Front-end
-To create the form on the frontend, use the Z.js library. An example form can be created with this code:
+To create the form on the frontend, use Z.js, the framework's bundled frontend script. It is served through the [asset proxy](../core-features/asset-proxy.md) and included automatically by the framework's default head component, so the global `Z` object is available in every properly set up [layout](../core-features/layouts.md). An example form can be created with this code:
 ```javascript
 var form = Z.Forms.create({dom: "form"});
 

@@ -2,6 +2,8 @@
 Some forms require the user to input multiple values into one field. Or to create multiple blocks or something. For every case this happens the CED system can be used. CED stands for **C**reate **E**dit **D**elete. It builds on top of the [form system](auto-form-validation.md).
 
 ## Front-end
+Like the rest of the form system, the frontend is provided by the bundled [Z.js](auto-form-validation.md#front-end) script, which exposes the global `Z` object used below.
+
 This is an example for adding permissions to a group. It is possible to have n permissions per group.
 ```js
 var form = Z.Forms.create({dom: "form"});
