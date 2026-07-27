@@ -7,7 +7,7 @@ site_description: A modular, prototyping speed oriented PHP framework.
 # Repository
 repo_name: zubzet/framework
 repo_url: https://github.com/zubzet/framework
-edit_uri: edit/main/docs/
+edit_uri: edit/develop/docs/
 
 # Copyright
 copyright: ZubZet contributors
@@ -107,7 +107,6 @@ nav:
         - Layouts: core-features/layouts
         - Permission System: core-features/permission-system
         - Password Handling: core-features/password-handling
-        - Localization: core-features/localization
         - Configuration: core-features/configuration
         - REST API: core-features/rest-api
         - Parameter Abstraction: core-features/parameter-abstraction
