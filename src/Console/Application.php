@@ -3,6 +3,7 @@
     namespace ZubZet\Framework\Console;
 
     use ZubZet\Framework\Support\Commands\Startup;
+    use ZubZet\Framework\Registry\Commands\ModuleSetup;
     use ZubZet\Framework\Database\Migration\Commands\Seed;
     use ZubZet\Framework\Database\Migration\Commands\Sync;
     use ZubZet\Framework\Database\Migration\Commands\Status;
@@ -15,6 +16,8 @@
 
     class Application {
         public static function bootstrap(\z_framework $booter): ConsoleApplication {
+            // Seam: module-provided commands will be collected here once
+            // modules can declare them (see ZubZet\Framework\Registry\Modules).
             $automaticallyLoadedCommands =  [];
 
             $console = new ConsoleApplication("ZubZet CLI");
@@ -29,6 +32,7 @@
                     new UnlockMigration(),
                     new HashingAlgorithmMigration(),
                     new Startup(),
+                    new ModuleSetup(),
                     new CoverageStart(),
                     new CoverageStop(),
                 ],
