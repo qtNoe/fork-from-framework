@@ -1,6 +1,6 @@
 # Query Builder Examples
 
-This page provides detailed examples for building queries with the CakePHP Query Builder in ZubZet.
+This page provides detailed examples for [building queries](./index.md) with the CakePHP Query Builder in ZubZet.
 
 ---
 

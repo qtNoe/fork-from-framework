@@ -16,7 +16,7 @@ execution_type = test
 
 If `execution_type` is anything other than `test` (including unset), the bar is not bootstrapped, no assets are emitted, and no collectors run. There is no way to enable it for production.
 
-The bar relies on the layout calling the body essentials. The default layout already does this. If you ship a custom layout and want the bar visible there too, include the body essentials inside your `<body>`:
+The bar relies on the [layout](layouts.md) calling the body essentials. The default layout already does this. If you ship a custom layout and want the bar visible there too, include the body essentials inside your `<body>`:
 
 ```blade
 <x-zubzet::body :opt="$opt"/>
@@ -26,7 +26,7 @@ The bar relies on the layout calling the body essentials. The default layout alr
 
 ### Queries
 
-Every SQL statement that runs through `Connection::exec()` (or `Model::exec()`) is captured with its placeholders interpolated, the bound values, the duration, and the row count. Click a query to open a parameter table and copy the statement to the clipboard.
+Every SQL statement that [runs through](../api/classes/ZubZet-Framework-Database-Connection.html#method_exec) `Connection::exec()` (or `Model::exec()`) is captured with its placeholders interpolated, the bound values, the duration, and the row count. Click a query to open a parameter table and copy the statement to the clipboard.
 
 Bound values are rendered as single quoted SQL literals so the displayed query can be pasted into a SQL client and executed as is.
 
@@ -37,7 +37,7 @@ VALUES ('TestData')
 
 ### Templates
 
-Every view passed to `$res->render(...)` is captured as a row in the templates tab, together with the layout name and the original options array.
+Every [view](views.md) passed to `$res->render(...)` is captured as a row in the templates tab, together with the layout name and the original options array.
 
 ```
 core/render (layout: layout/default_layout.php)
@@ -70,7 +70,7 @@ Set it to `false` to see every query, including the ones the framework runs inte
 
 ## Marking your own models as internal
 
-If you have models that you consider infrastructure rather than application logic, you can opt them into the same filter. Use the `IsInternalModel` trait on the model class:
+If you have [models](models.md) that you consider infrastructure rather than application logic, you can opt them into the same filter. Use the `IsInternalModel` [trait](../api/classes/ZubZet-Framework-Database-IsInternalModel.html) on the model class:
 
 ```php
 use ZubZet\Framework\Database\IsInternalModel;

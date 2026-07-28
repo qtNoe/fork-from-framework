@@ -5,7 +5,7 @@ Console commands enable automation, debugging, and execution of application logi
 
 ### How to Run a Command
 
-To execute a console command inside the Docker container, first access the container shell:
+To execute a console command inside the [Docker container](../setup/installation.md), first access the container shell:
 
 ```bash
 npm run shell
@@ -34,8 +34,8 @@ Lists all available console commands.
 
 ### run
 
-Executes a controller action directly from the console environment.
-This is useful for running application logic, maintenance tasks, or background operations without an HTTP request.
+Executes a [controller action](controllers-and-actions.md) directly from the console environment.
+This is useful for [running application logic](../advanced-features/commands.md), maintenance tasks, or background operations without an HTTP request.
 
 ### info:startup
 

@@ -198,7 +198,7 @@ In this example, we will check if the user has the `library.delete` permission. 
 - **Closing PHP for HTML Rendering**: Inside the `if` condition, we close PHP to render the HTML (e.g., a button for editing the book). If the user lacks the permission, the `else` block displays a message (`No Permissions`).
 
 ## How to create Roles and Permissions
-Now that we understand how to use permissions, it’s essential to know how to create them. Here’s a step-by-step guide using the admin panel provided by the framework:
+Now that we understand how to use permissions, it’s essential to know how to create them. Here’s a step-by-step guide using the [admin panel](../z-admin/usage.md) provided by the framework:
 
 1) **Access the Admin Panel**  
 Open your browser and navigate to the admin panel at `http://localhost:8080/z`.
