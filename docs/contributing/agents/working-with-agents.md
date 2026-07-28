@@ -27,6 +27,7 @@ There is no top-level `package.json` and no PHPUnit suite — testing is end-to-
 - `Maintenance/` — Standalone maintenance gate (see [Maintenance Mode](../../core-features/maintenance.md))
 - `Message/` — `Request`, `Response`, `Input/State`
 - `QueryBuilder/` — CakePHP query-builder adapter
+- `Registry/` — Central resolver for convention lookups + module discovery (see below)
 - `Routing/` — `Router` trait, FastRoute integration, `Route` builder
 - `Support/` — Global helpers, dynamic attributes, function-conflict resolution
 - `Testing/` — Coverage commands
@@ -79,6 +80,24 @@ A view is a Blade template that extends a layout and defines head/content sectio
 ```
 
 Rendered via `$res->render("path/to/view", $vars, "layout/…")` or the `view()` global helper.
+
+## Registry & modules
+
+`src/Registry/` is the single resolver for everything the framework loads by convention
+(controllers, models, views, routes, migrations, seeds, assets). The API is three static calls on
+`Registry`: `paths($kind)` (ordered roots), `files($kind)` (every file across roots), and
+`find($kind, $name)` (locate one file). Precedence everywhere: userspace, then modules in order,
+then framework. The one exception is asset-proxy mounts, where module webroots append last.
+
+`find()` memoizes per request in `StaticCache` and probes each root flat first; the recursive
+per-root index (`RootIndex`) only runs for bare names after a flat miss, shallowest match first.
+Do not add new `file_exists`/`glob` lookups at call sites: route them through the Registry.
+
+Module discovery lives in `Registry\Modules`: installed Composer packages of type `zubzet-module`,
+ordered by the `modules` ini key (comma-separated package names), unlisted ones after in Composer
+installed order. The sample modules are `tests/e2e/modules/{guestbook,theme}`, exercised by the specs in
+`tests/e2e/tests/cypress/e2e/modules/`. User-facing docs: [Modules](../../advanced-features/modules.md);
+internals and rationale: [Module System Architecture](../module-system-architecture.md).
 
 ## Render engine (Katana)
 

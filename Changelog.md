@@ -8,6 +8,11 @@ These todos should be as temporary as possible:
 1. Added #183 - Multiple forms in one view: every `ZForm` submission carries a `formAction` taken from the new `name` option (falling back to `dom`), and `$req->hasFormData($formAction)` targets a single form. Argument-less calls keep detecting any submitted form
 1. Added #178 - Health endpoint at `GET /_zubzet/health`: performs an explicit database check and reports plain JSON without error details. Enabled by default, disable via `health_endpoint_enabled = false`
 1. Fixed `--dry` executing PHP migrations in `db:migrate` and `db:sync`. Migration files are no longer loaded during a dry run, so skip and environment markers are not evaluated - every pending migration is reported
+1. Added - Module system: Composer packages of type `zubzet-module` contribute controllers, models, views, routes, migrations, seeds, and webroot assets, resolved through the new central `Registry` (`src/Registry`) with the precedence userspace, then modules (ordered by the `modules` ini key, then Composer installed order), then framework. Includes the `module:setup` command (append-only merge of missing module ini defaults) and module rows in `info:startup`. See the [Modules docs](docs/advanced-features/modules.md)
+1. Bare controller and model name lookups now resolve recursively into subdirectories after a flat miss, shallowest match first. **Migrator note:** previously unreachable nested files under `app/Controllers` and `app/Models` become routable - delete stale copies you do not want served
+1. The model instance cache is now keyed by the resolved file path. **Migrator note:** two `getModel` calls that aliased one instance via the `dir` parameter now yield separate instances
+1. `db:migrate` and `db:sync` now abort when two migration files share a basename anywhere in the assembled set, userspace subdirectories and framework migrations included (the scan is recursive). **Migrator note:** executed state is keyed on the basename, so one duplicate was previously silently skipped; rename or delete one of the listed files to proceed
+1. The asset proxy no longer serves files with `.php`, `.phtml`, or `.ini` extensions. **Migrator note:** this applies to every mount, including sources registered via `registerWebRootSource`
 
 ## v1.2.0
 1. Added DEV Changelog
