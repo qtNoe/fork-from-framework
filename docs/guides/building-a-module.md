@@ -310,9 +310,10 @@ the module's `webroot/` directory is served under `/_zubzet/asset-proxy/`, so cr
 }
 ```
 
-Give asset files a name that includes your module's name: module assets are added after all
-existing asset sources and cannot shadow an application, frontend, or framework asset in this
-version, so a colliding filename would simply never be served.
+Give asset files a name that includes your module's name unless shadowing is the point: module
+sources mount before the framework's, so a module can deliberately replace a framework asset, and
+earlier modules win over later ones. The application's own `webroot/` beats everything because the
+web server serves it before PHP runs.
 
 ### Including a sub-view
 
@@ -426,6 +427,40 @@ the package is installed, and the host application can use it like any dependenc
 
 ?>
 ```
+
+## A Console Command
+
+A module can ship console commands in `app/Commands/`. One global class per file, named like the
+file, extending the Symfony `Command` class. Create `app/Commands/GuestbookStatsCommand.php`:
+
+```php
+<?php
+
+    use Symfony\Component\Console\Command\Command;
+    use Symfony\Component\Console\Input\InputInterface;
+    use Symfony\Component\Console\Output\OutputInterface;
+
+    class GuestbookStatsCommand extends Command {
+
+        protected function configure(): void {
+            $this->setName("guestbook:stats");
+            $this->setDescription("Print the number of guestbook entries.");
+        }
+
+        protected function execute(InputInterface $in, OutputInterface $out): int {
+            $count = model("GuestbookStats")->countEntries();
+            $out->writeln("guestbook-entries:$count");
+            return Command::SUCCESS;
+        }
+    }
+
+?>
+```
+
+Run it with `php index.php guestbook:stats`; it also shows up in `php index.php list`. The
+framework is fully booted before `execute()` runs, so `model()` and `config()` work as usual. If
+the application defines a command with the same name, the application's copy wins, which gives
+consumers a clean way to replace a module command.
 
 ## Default Settings and module:setup
 

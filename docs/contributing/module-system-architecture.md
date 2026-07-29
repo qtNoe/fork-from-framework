@@ -58,6 +58,7 @@ inside a module, and inside the framework. The built-in table lives in `src/Regi
 | models | config `z_models` | `app/Models` | `IncludedComponents/models/` | `.php` | yes | yes |
 | views | config `z_views` | `app/Views` | `IncludedComponents/views` | `.php` | yes | yes |
 | routes | config `routes` | `app/Routes` | `IncludedComponents/routes` | `.php` | yes | **no** |
+| commands | config `z_commands` | `app/Commands` | none (framework commands register explicitly) | `.php` | yes | yes |
 | migrations | fixed `./app/Database/migrations` | `app/Database/migrations` | `IncludedComponents/database/Migration` | `.sql`, `.php` | yes | yes |
 | seeds | fixed `./app/Database/seed` | `app/Database/seed` | none (framework ships no seeds) | `.sql`, `.php` | yes | yes |
 | assets | config `z_frontend_root` | `webroot` | `IncludedComponents/assets/` | any | yes | yes |
@@ -175,22 +176,32 @@ every module alike.
 
 ### Assets (`src/Resources/AssetProxy.php`)
 
-Module `webroot/` directories are appended as mounts **after** all existing sources, so modules
-can add assets but never shadow one. This is the acknowledged asymmetry: the proxy has always been
-framework-first, the inverse of the global precedence rule, and flipping it now would change which
-asset wins for existing apps. Aligning the proxy with userspace-first precedence is planned for
-the next major. As defense-in-depth, `serve()` denies the `.php`, `.phtml`, and `.ini` extensions
+Module `webroot/` directories mount **before** the framework's sources (framework assets,
+`z_frontend_root`, bundled packages), aligning the proxy with the global precedence: modules can
+shadow framework assets, earlier modules win over later ones. The application's own `webroot/`
+needs no mount because the web server serves it before PHP runs, which keeps userspace at the top
+of the chain. As defense-in-depth, `serve()` denies the `.php`, `.phtml`, and `.ini` extensions
 on every mount and turns `Mount::resolve()` traversal exceptions into a 404. Only
 `<moduleRoot>/webroot` is ever mounted, never the module root.
 
+### Commands (`Application.php`, `CommandDiscovery.php`)
+
+Convention commands live in `app/Commands/` (userspace and modules; the framework's own commands
+stay explicitly registered as namespaced classes, so the kind's framework root is null). A command
+file declares one global class named like the file, extending the Symfony `Command` class.
+`CommandDiscovery::commands()` walks `Registry::files("commands")` in precedence order with the
+usual `class_exists` include guard, so a same-named class from an earlier root shadows a later
+file. Symfony resolves command-**name** collisions last-add-wins, therefore `Application.php` adds
+the framework commands first and the discovered commands in **reverse** precedence order: the
+userspace registration lands last and overrides any module or framework command sharing its name.
+
 ### Console (`Application.php`, `RunCommand.php`, `Startup.php`)
 
-`Application.php` registers `module:setup`; its `$automaticallyLoadedCommands` array is the
-documented seam for module-contributed commands (empty in v1). `RunCommand` unions
-`ActionDiscovery::find()` over the userspace controller root plus `moduleRoots("controllers")`
-using `+=`, so userspace shadows modules in CLI listings. `info:startup` prints one row per
-discovered module in resolution order, which makes a typo'd package type or `modules` entry
-diagnosable in one place.
+`Application.php` registers `module:setup` alongside the discovered convention commands.
+`RunCommand` unions `ActionDiscovery::find()` over the userspace controller root plus
+`moduleRoots("controllers")` using `+=`, so userspace shadows modules in CLI listings.
+`info:startup` prints one row per discovered module in resolution order, which makes a typo'd
+package type or `modules` entry diagnosable in one place.
 
 ## Performance model
 
@@ -228,8 +239,6 @@ Two changes are intentionally additive and documented in `Changelog.md` as migra
 
 ## Known limitations and deferred work
 
-1. Module-contributed console commands: the seam is `$automaticallyLoadedCommands` in
-   `Application.php`; not populated in v1.
 1. `z_version` migration names are not root-qualified; v1 only detects basename collisions. The
    real fix needs a `z_version` schema migration.
 1. `ActionDiscovery` is flat per root: nested module controllers route on the web but do not
@@ -253,9 +262,12 @@ The spec group `tests/e2e/tests/cypress/e2e/modules/` proves:
 
 1. `guestbook.cy.js`: a module works end to end, route and convention URL, POST round trip through
    the module's own table, css served through the asset proxy and actually linked.
-1. `resolution.cy.js`: recursive find (nested controller and model by bare name), userspace
-   shadows module, module shadows framework, app code consumes the module's PSR-4 namespace, and
-   the append-last asset rule keeps an existing framework asset byte-identical.
+1. `resolution.cy.js`: recursive find (nested controller and model by bare name), explicit dotted
+   model paths (same file as the bare name, never rescued by the index), userspace shadows module,
+   module shadows framework for views and proxy assets, app code consumes the module's PSR-4
+   namespace.
+1. `commands.cy.js`: module and userspace convention commands run, appear in `list`, and a
+   userspace command wins a name collision with a module command.
 1. `ordering.cy.js`: Composer installed order by default; listing the theme first in the `modules`
    key flips which module's view wins.
 1. `setup-command.cy.js`: `module:setup` merge, first module winning shared keys, idempotent

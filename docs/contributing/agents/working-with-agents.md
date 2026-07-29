@@ -84,10 +84,11 @@ Rendered via `$res->render("path/to/view", $vars, "layout/…")` or the `view()`
 ## Registry & modules
 
 `src/Registry/` is the single resolver for everything the framework loads by convention
-(controllers, models, views, routes, migrations, seeds, assets). The API is three static calls on
-`Registry`: `paths($kind)` (ordered roots), `files($kind)` (every file across roots), and
+(controllers, models, views, routes, commands, migrations, seeds, assets). The API is three static
+calls on `Registry`: `paths($kind)` (ordered roots), `files($kind)` (every file across roots), and
 `find($kind, $name)` (locate one file). Precedence everywhere: userspace, then modules in order,
-then framework. The one exception is asset-proxy mounts, where module webroots append last.
+then framework. Asset-proxy mounts follow the same order (modules before the framework layers);
+the application's webroot needs no mount because the web server serves it before PHP runs.
 
 `find()` memoizes per request in `StaticCache` and probes each root flat first; the recursive
 per-root index (`RootIndex`) only runs for bare names after a flat miss, shallowest match first.

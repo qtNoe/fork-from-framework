@@ -18,6 +18,7 @@ my-module/
 │   ├── Models/                   global model classes, subdirectories allowed
 │   ├── Views/                    Blade views
 │   ├── Routes/                   route files, top level only
+│   ├── Commands/                 Symfony console commands, subdirectories allowed
 │   ├── Database/
 │   │   ├── migrations/
 │   │   └── seed/
@@ -112,6 +113,7 @@ module list.
 | Controllers | `app/Controllers/` | Reachable by convention, e.g. `/BlogPost/index` |
 | Models | `app/Models/` | Available via `$req->getModel()` / `model()` |
 | Routes | `app/Routes/` | Loaded after userspace route files, before framework routes |
+| Commands | `app/Commands/` | Registered in the console next to framework commands |
 | Migrations | `app/Database/migrations/` | Join the external migration set |
 | Seeds | `app/Database/seed/` | Run by `db:seed` after userspace seeds |
 | Assets | `webroot/` | Served via `/_zubzet/asset-proxy/` |
@@ -140,6 +142,34 @@ patterns are not detected, though; they coexist, and the first registration wins
 such a URL takes it over silently. Prefix your module's routes with a name that clearly belongs to
 it. The `/_zubzet` prefix is reserved for the framework.
 
+### Commands
+
+Files in `app/Commands/` declare one global class each, named like the file and extending the
+Symfony `Command` class. They are discovered from the application first, then from every module in
+module order, and registered next to the framework's own commands:
+
+```php
+<?php
+    use Symfony\Component\Console\Command\Command;
+    use Symfony\Component\Console\Input\InputInterface;
+    use Symfony\Component\Console\Output\OutputInterface;
+
+    class BlogPruneCommand extends Command {
+        protected function configure(): void {
+            $this->setName("blog:prune");
+        }
+
+        protected function execute(InputInterface $in, OutputInterface $out): int {
+            model("BlogPost")->pruneDrafts();
+            return Command::SUCCESS;
+        }
+    }
+?>
+```
+
+Run it with `php index.php blog:prune`. When two roots register the same command name, the usual
+precedence applies: the application wins over modules, modules win over the framework.
+
 ### Migrations
 
 Module migrations count as **external** migrations, like the framework's own:
@@ -165,9 +195,11 @@ A module's `webroot/` directory is registered as an asset-proxy source, so its f
 /_zubzet/asset-proxy/<path>
 ```
 
-Module sources are appended after all existing sources: modules can add assets but cannot shadow
-an existing framework, frontend, or bundled asset in this version. Files with a `.php`, `.phtml`,
-or `.ini` extension are never served from any source. See [Asset Proxy](../core-features/asset-proxy.md).
+Module sources mount before the framework's own sources, following the global precedence: a module
+can shadow a framework, frontend, or bundled asset, and earlier modules win over later ones. The
+application's `webroot/` sits above everything because the web server serves it before PHP runs.
+Files with a `.php`, `.phtml`, or `.ini` extension are never served from any source. See
+[Asset Proxy](../core-features/asset-proxy.md).
 
 ## Recursive lookup
 
@@ -272,13 +304,20 @@ internalizing before you design a module:
 - **Recursive lookup finds bare names in subdirectories, shallowest first.** You can organize
   controllers and models in subdirectories without changing how they are addressed; the directory
   layout is organizational, not part of the name.
-- **Assets cannot shadow existing assets in this version.** Module `webroot/` sources are appended
-  after all existing asset sources, so a module can add files but a colliding filename is never
-  served. Name asset files after your module.
+- **Assets follow the same precedence as everything else.** Module `webroot/` sources mount before
+  the framework's, so a module can deliberately replace a framework asset, and the application's
+  own `webroot/` beats everything (the web server serves it before PHP runs). Name asset files
+  after your module unless shadowing is the point.
+- **Commands resolve by Symfony name, userspace last-word.** A command in `app/Commands/` is a
+  global class named like its file, extending the Symfony `Command` class. When two roots register
+  the same command name, the userspace copy wins, then modules in order, then the framework; an
+  application can deliberately override a module or framework command by reusing its name.
 - **Some surfaces are not module-aware yet.** The console `run` command's controller listing is
   flat: it sees only the top level of the userspace and module controller directories. The
   maintenance page and the email layout probe look only at userspace. These are documented
   follow-ups, not extension points.
+- **Convention commands boot the framework.** Command classes run after the full bootstrap, so
+  `config()`, `model()`, and the database are available inside `execute()`.
 
 For the internals behind these rules (the Registry, its kind table, and the lookup fast and slow
 paths), see the maintainer documentation:
