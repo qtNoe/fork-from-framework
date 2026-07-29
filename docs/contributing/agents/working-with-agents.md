@@ -216,6 +216,7 @@ Call sites that feed the bar:
 | `Connection::exec` | `DebugBarBridge::collectQuery(...)` | `QueryCollector` |
 | `CanRenderView::render` | `DebugBarBridge::collectTemplate(...)` | `TemplateCollector` |
 | `LoggerFactory::getOrCreateLogger` | `DebugBarBridge::collectLogger(...)` | `MonologCollector` (a Monolog handler) |
+| `Registry::find` / `Registry::files` | `DebugBarBridge::collectResolution(...)` | `ResolutionCollector` (lookup provenance: userspace / module / framework) |
 
 Internal-query filtering uses source tagging: models that mark themselves with the `IsInternalModel` trait set `isInternalModel = true`, and `Connection::exec` records the calling model on the connection before the query runs. `QueryCollector::addQuery` then drops queries from internal models when `debugbar_hide_internal_queries = true` (default). Direct `db()->exec(...)` calls have no calling model and are always shown.
 
