@@ -243,9 +243,17 @@ describe('Permission System - User', () => {
 
     it('should check if a user can be added', () => {
         requestJson('/user/add').then((output) => {
-            expect(output).to.deep.equal(
-                {"createdUserDirect":{"id":10000,"email":"user_add@cypress.test","isVerified":true,"verified":"2005-01-01 00:00:00"},"createdUserGet":{"id":10000,"email":"user_add@cypress.test","isVerified":true,"verified":"2005-01-01 00:00:00"},"passwordWorking":true}
-            );
+            // The exact id depends on the cluster's auto-increment offset,
+            // but it always comes from the range pinned in 9_auto_increment.sql.
+            expect(output.createdUserDirect.id).to.be.at.least(10000);
+            expect(output.createdUserDirect).to.deep.equal({
+                id: output.createdUserDirect.id,
+                email: 'user_add@cypress.test',
+                isVerified: true,
+                verified: '2005-01-01 00:00:00',
+            });
+            expect(output.createdUserGet).to.deep.equal(output.createdUserDirect);
+            expect(output.passwordWorking).to.equal(true);
         });
     });
 

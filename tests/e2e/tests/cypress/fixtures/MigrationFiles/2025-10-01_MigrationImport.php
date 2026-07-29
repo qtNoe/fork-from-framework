@@ -10,9 +10,9 @@
             $table->addColumn("name", "string", ["length" => 255, "notnull" => true]);
 
             $this->run(
-                "INSERT INTO migration_import (name) VALUES
-                ('Test Entry 1'),
-                ('Test Entry 2');"
+                "INSERT INTO migration_import (id, name) VALUES
+                (1, 'Test Entry 1'),
+                (2, 'Test Entry 2');"
             );
         }
     }

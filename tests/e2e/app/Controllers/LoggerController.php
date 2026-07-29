@@ -72,7 +72,7 @@
         }
 
         public function action_slowInsertId(Request $req, Response $res) {
-            // TRUNCATE resets AUTO_INCREMENT so the slow INSERT is deterministically id=3.
+            // TRUNCATE keeps the table down to exactly the three rows inserted below.
             db()->exec("TRUNCATE TABLE `slow_query`");
             db()->exec("INSERT INTO `slow_query` (`data`) VALUES ('a')");
             db()->exec("INSERT INTO `slow_query` (`data`) VALUES ('b')");
@@ -80,8 +80,17 @@
             // Slow INSERT crosses logger_slow_query_ms; nested INSERT into z_interaction_log
             // runs on the same Connection and would clobber insertId without the Checkpoint guard.
             db()->exec("INSERT INTO `slow_query` (`data`) VALUES (SLEEP(0.5))");
+            $insertId = db()->getInsertId();
 
-            echo json_encode(['insertId' => db()->getInsertId()]);
+            // Galera interleaves auto-increment values across nodes, so the exact id is
+            // not deterministic. Read the slow row's id back (SLEEP(0.5) stores '0') so
+            // the spec can pin insertId to the row the slow INSERT actually created.
+            $slowRow = db()->exec("SELECT `id` FROM `slow_query` WHERE `data` = '0'")->resultToArray();
+
+            echo json_encode([
+                'insertId' => (int) $insertId,
+                'slowRowId' => (int) $slowRow[0]['id'],
+            ]);
         }
 
         public function action_slowSelectResult(Request $req, Response $res) {

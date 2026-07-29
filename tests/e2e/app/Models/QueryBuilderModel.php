@@ -73,7 +73,8 @@
         }
 
         public function selectInsert() {
-            $query = $this->dbSelect(["id", "name", "value"], "query_builder_insert");
+            $query = $this->dbSelect(["id", "name", "value"], "query_builder_insert")
+                            ->orderAsc("id");
 
             return $this->exec($query)->resultToArray();
         }
@@ -86,7 +87,10 @@
         }
 
         public function insert() {
+            // Explicit ids: Galera interleaves auto-increment values per node,
+            // so the ids are fixed here to keep the assertions deterministic.
             $query = $this->dbInsert("query_builder_insert", [
+                "id" => 1,
                 "name" => "TestName1",
                 "value" => 123
             ]);
@@ -94,9 +98,11 @@
             $this->exec($query);
 
             $query = $this->dbInsert("query_builder_insert", [
+                "id" => 2,
                 "name" => "TestName2",
                 "value" => 456
             ])->values([
+                "id" => 3,
                 "name" => "TestName3",
                 "value" => 789
             ]);

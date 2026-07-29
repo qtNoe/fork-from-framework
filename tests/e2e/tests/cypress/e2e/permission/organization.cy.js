@@ -53,10 +53,15 @@ describe('Permission System - Organization', () => {
 
     it('should be possible to create a new organization (add)', () => {
         requestJson('/organization/add').then((output) => {
-            expect(output).to.deep.equal({
-                "createdOrganizationDirect": {"id": 10000, "name": "org_add_NewOrganization"},
-                "createdOrganizationGet": {"id": 10000, "name": "org_add_NewOrganization"}
-            });
+            // The id is auto-generated at request time; the seeded
+            // auto_increment starts at 10000 but Galera interleaves ids per
+            // node, so assert the seeded floor and that both read paths
+            // return the identical object instead of an exact id.
+            const direct = output.createdOrganizationDirect;
+            expect(direct).to.have.all.keys("id", "name");
+            expect(direct.id).to.be.at.least(10000);
+            expect(direct.name).to.equal("org_add_NewOrganization");
+            expect(output.createdOrganizationGet).to.deep.equal(direct);
         });
     });
 
@@ -176,19 +181,19 @@ describe('Permission System - Organization', () => {
     });
 
     it('should not create a group when add() is called without createGroup', () => {
-        // The earlier `add` test in this file already consumed id 10000.
+        // The id is auto-generated at request time and Galera interleaves
+        // ids per node, so only the seeded 10000 floor is deterministic.
         requestJson('/organization/addWithoutGroup').then((output) => {
-            expect(output).to.deep.equal({
-                "id": 10001,
-                "name": "org_addWithoutGroup_NewOrganization",
-                "group": null
-            });
+            expect(output).to.have.all.keys("id", "name", "group");
+            expect(output.id).to.be.at.least(10000);
+            expect(output.name).to.equal("org_addWithoutGroup_NewOrganization");
+            expect(output.group).to.equal(null);
         });
     });
 
     it('should create and link a group when add() is called with createGroup=true', () => {
         requestJson('/organization/addWithGroup').then((output) => {
-            expect(output.organization.id).to.equal(10002);
+            expect(output.organization.id).to.be.at.least(10000);
             expect(output.organization.name).to.equal("org_addWithGroup_NewOrganization");
             expect(output.organization.group).to.not.equal(null);
             expect(output.organization.group.name).to.equal("org_addWithGroup_NewOrganization_Group");

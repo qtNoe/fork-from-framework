@@ -4,7 +4,8 @@
 
         public function checkImportSuccess() {
             $sql = "SELECT *
-                    FROM `migration_import`";
+                    FROM `migration_import`
+                    ORDER BY `id`";
 
             $migrationImport = $this->exec($sql)->resultToArray();
 

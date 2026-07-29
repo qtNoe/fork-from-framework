@@ -155,8 +155,14 @@ describe('Form Date Validation', () => {
         cy.wait('@upload');
 
         cy.visit("/Form/validationFile");
-        cy.contains("TestFile_Small_2.pdf");
-        cy.contains("FormUpload:3");
+        // Galera interleaves auto-increment ids across nodes, so the z_file
+        // id is not a dense counter. Assert consistency instead: the media
+        // row must reference the z_file id rendered for the uploaded file.
+        cy.contains('li', 'TestFile_Small_2.pdf').invoke('text').then((text) => {
+            const fileId = text.split(':')[0];
+            expect(fileId).to.match(/^\d+$/);
+            cy.contains(`FormUpload:${fileId}`);
+        });
     });
 
     // Exercises the formUpload subpath's hasErrors → formErrors branch by
