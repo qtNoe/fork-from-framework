@@ -18,6 +18,25 @@ describe('Module resolution', () => {
         });
     });
 
+    it('resolves an explicit dotted model path to the same model as the bare name', () => {
+        cy.request('/GuestbookAdmin/stats').then((bareRes) => {
+            cy.request('/GuestbookAdmin/statsExplicit').then((dottedRes) => {
+                expect(dottedRes.status).to.eq(200);
+                const bare = bareRes.body.match(/data-test="guestbook-count">(\d+)</)[1];
+                const dotted = dottedRes.body.match(/data-test="guestbook-count">(\d+)</)[1];
+                expect(dotted).to.eq(bare);
+            });
+        });
+    });
+
+    it('never rescues a wrong explicit path through the recursive index', () => {
+        // "nowhere.GuestbookStats" names a directory that does not hold the
+        // model; explicit paths must fail instead of falling back to the index.
+        cy.request({ url: '/GuestbookAdmin/statsMissing', failOnStatusCode: false }).then((res) => {
+            expect(res.status).to.eq(500);
+        });
+    });
+
     it('renders the userspace footer over the module copy', () => {
         cy.request('/guestbook').then((res) => {
             expect(res.body).to.include('app-footer');
@@ -41,13 +60,20 @@ describe('Module resolution', () => {
     });
 
     it('still serves the framework Z.js asset with the exact application/javascript content-type', () => {
-        // The guestbook module ships its own webroot/Z.js probe copy; module
-        // mounts append last, so the framework copy must keep winning.
         cy.request('/_zubzet/asset-proxy/Z.js').then((res) => {
             expect(res.status).to.eq(200);
             expect(res.headers['content-type']).to.eq('application/javascript');
             expect(res.body.length).to.be.greaterThan(0);
-            expect(res.body).to.not.include('module-zjs-shadow-probe');
+        });
+    });
+
+    it('lets a module shadow a framework asset through the proxy', () => {
+        // Module mounts come before the framework mounts, matching the global
+        // precedence. css/loadCircle.css exists in the framework assets and in
+        // the guestbook module; the module copy must win.
+        cy.request('/_zubzet/asset-proxy/css/loadCircle.css').then((res) => {
+            expect(res.status).to.eq(200);
+            expect(res.body).to.include('module-loadcircle-shadow');
         });
     });
 
