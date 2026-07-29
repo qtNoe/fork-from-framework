@@ -318,6 +318,36 @@ internalizing before you design a module:
   follow-ups, not extension points.
 - **Convention commands boot the framework.** Command classes run after the full bootstrap, so
   `config()`, `model()`, and the database are available inside `execute()`.
+- **The debug bar shows every resolution.** In dev environments the
+  [Resolutions tab](../core-features/debug-bar.md#resolutions) lists which root won each
+  controller, model, and route file on the page, so shadowing is always inspectable.
+
+## Overriding module behavior today
+
+Two supported recipes cover most "I want to change what this module does at this URL" cases
+without waiting for a hook system:
+
+1. **Claim a convention URL with your own route.** Module controllers reached by convention
+   (`/Guestbook/index`) are not FastRoute registrations, and application route files load first,
+   so a route in your `app/Routes/` simply takes the URL over:
+
+    ```php
+    use ZubZet\Framework\Routing\Route;
+
+    Route::get('/Guestbook/index', [MyGuestbookController::class, 'action_index']);
+    ```
+
+    Note that re-registering a route pattern a module already registers byte-identically is a hard
+    error, not an override; this recipe applies to convention URLs and new patterns.
+
+1. **Shadow the controller file.** Route handlers and convention dispatch both resolve controller
+   classes through the Registry, so shipping a same-named controller in your application replaces
+   the module's implementation everywhere it is referenced, including inside the module's own
+   registered routes. This is file-level and coarse: your copy takes over every action of that
+   controller.
+
+A finer-grained mechanism (an event and hook system) is on the roadmap; see the pull request that
+introduced the module system for context.
 
 For the internals behind these rules (the Registry, its kind table, and the lookup fast and slow
 paths), see the maintainer documentation:
