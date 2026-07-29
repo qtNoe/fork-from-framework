@@ -3,6 +3,7 @@
     namespace ZubZet\Framework\Registry;
 
     use ZubZet\Framework\Support\StaticCache;
+    use ZubZet\Framework\ErrorHandling\DebugBar\DebugBarBridge;
 
     /**
      * Central resolver for everything the framework loads by convention.
@@ -15,13 +16,21 @@
 
         /** @return string[] Ordered roots where $kind can live. */
         public static function paths(string $kind): array {
-            $definition = Kinds::get($kind);
-            $paths = [$definition->userspaceRoot()];
-            foreach(Modules::roots() as $root) {
-                $paths[] = "$root/{$definition->moduleSubPath}";
+            return array_map(fn($labeled) => $labeled[1], self::labeledPaths(Kinds::get($kind)));
+        }
+
+        /**
+         * @return array{0: string, 1: string}[] Ordered [origin, root] pairs;
+         * origin is "userspace", "module:<package>", or "framework". Fuels the
+         * debug bar's resolution provenance.
+         */
+        private static function labeledPaths(Kind $definition): array {
+            $paths = [["userspace", $definition->userspaceRoot()]];
+            foreach(Modules::roots() as $package => $root) {
+                $paths[] = ["module:$package", "$root/{$definition->moduleSubPath}"];
             }
             if(!is_null($definition->frameworkSubPath)) {
-                $paths[] = config("z_framework_root") . $definition->frameworkSubPath;
+                $paths[] = ["framework", config("z_framework_root") . $definition->frameworkSubPath];
             }
             return $paths;
         }
@@ -44,14 +53,18 @@
         public static function files(string $kind): array {
             $definition = Kinds::get($kind);
             $files = [];
-            foreach(self::paths($kind) as $root) {
+            foreach(self::labeledPaths($definition) as [$origin, $root]) {
                 if(!is_dir($root)) continue;
                 if($definition->deepFiles) {
-                    $files = array_merge($files, RootIndex::for($root, $definition->extensions)->all());
+                    $rootFiles = RootIndex::for($root, $definition->extensions)->all();
                 } else {
                     // Flat and alphabetical, matching the historical glob().
-                    $files = array_merge($files, glob(rtrim($root, "/") . "/*.php"));
+                    $rootFiles = glob(rtrim($root, "/") . "/*.php");
                 }
+                foreach($rootFiles as $file) {
+                    DebugBarBridge::collectResolution($definition->name, basename($file), $origin, $file);
+                }
+                $files = array_merge($files, $rootFiles);
             }
             return $files;
         }
@@ -73,11 +86,15 @@
             if(!is_null($memoized)) return $memoized;
 
             $definition = Kinds::get($kind);
-            $roots = array_map(fn($root) => rtrim($root, "/") . "/", self::paths($kind));
+            $roots = array_map(
+                fn($labeled) => [$labeled[0], rtrim($labeled[1], "/") . "/"],
+                self::labeledPaths($definition),
+            );
 
-            foreach($roots as $root) {
+            foreach($roots as [$origin, $root]) {
                 foreach($definition->extensions as $extension) {
                     if(file_exists($root . $name . $extension)) {
+                        DebugBarBridge::collectResolution($kind, $name, $origin, $root . $name . $extension);
                         return StaticCache::set("registry_find", $cacheKey, $root . $name . $extension);
                     }
                 }
@@ -88,9 +105,10 @@
             $isExplicitPath = false !== strpbrk($name, "/\\");
             if($isExplicitPath || !$definition->deepFind) return null;
 
-            foreach($roots as $root) {
+            foreach($roots as [$origin, $root]) {
                 $hit = RootIndex::for($root, $definition->extensions)->find($name);
                 if(!is_null($hit)) {
+                    DebugBarBridge::collectResolution($kind, $name, "$origin (recursive)", $hit);
                     return StaticCache::set("registry_find", $cacheKey, $hit);
                 }
             }
