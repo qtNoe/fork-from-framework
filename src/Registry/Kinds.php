@@ -35,6 +35,10 @@
                 new Kind("views", "z_views", null, "app/Views", "IncludedComponents/views"),
                 // deepFiles=false: keeps the historical flat glob("*.php") semantics.
                 new Kind("routes", "routes", null, "app/Routes", "IncludedComponents/routes", deepFiles: false),
+                // Framework commands are namespaced classes registered
+                // explicitly in Console\Application; only userspace and
+                // modules contribute by convention.
+                new Kind("commands", "z_commands", null, "app/Commands", null),
                 new Kind("migrations", null, "./app/Database/migrations", "app/Database/migrations", "IncludedComponents/database/Migration", [".sql", ".php"]),
                 new Kind("seeds", null, "./app/Database/seed", "app/Database/seed", null, [".sql", ".php"]),
                 // Assets: only moduleRoots() is consumed; the AssetProxy keeps its

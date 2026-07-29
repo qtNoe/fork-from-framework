@@ -16,13 +16,16 @@
 
     class Application {
         public static function bootstrap(\z_framework $booter): ConsoleApplication {
-            // Seam: module-provided commands will be collected here once
-            // modules can declare them (see ZubZet\Framework\Registry\Modules).
-            $automaticallyLoadedCommands =  [];
+            // Convention commands from userspace and modules, in precedence order.
+            $automaticallyLoadedCommands = CommandDiscovery::commands();
 
             $console = new ConsoleApplication("ZubZet CLI");
+
+            // Symfony resolves command-name collisions last-add-wins, so the
+            // framework registers first and the discovered commands follow in
+            // REVERSE precedence order: the userspace command lands last and
+            // overrides any module or framework command sharing its name.
             $console->addCommands(array_merge(
-                $automaticallyLoadedCommands,
                 [
                     new RunCommand(),
                     new Migrate(),
@@ -36,6 +39,7 @@
                     new CoverageStart(),
                     new CoverageStop(),
                 ],
+                array_reverse($automaticallyLoadedCommands),
             ));
             return $console;
         }
