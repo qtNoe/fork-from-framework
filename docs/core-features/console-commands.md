@@ -74,6 +74,22 @@ php index.php db:seed --skip-migrations
 
 See [Migrations](migrations/index.md) for the full migration workflow.
 
+### module:setup
+
+Merges missing default settings from installed [modules](../advanced-features/modules.md) into
+`z_config/z_settings.ini`. Append-only and idempotent: existing keys are never touched, and a
+rerun with nothing to merge changes nothing.
+
+```bash
+php index.php module:setup
+```
+
+### Your own commands
+
+Beyond `run`, the application (and every module) can ship dedicated Symfony commands in
+`app/Commands/`; they register automatically and appear in `list`. See
+[Commands](../advanced-features/commands.md) for the file convention and precedence rules.
+
 ### Coverage
 
 Collect a runtime code-coverage report:
