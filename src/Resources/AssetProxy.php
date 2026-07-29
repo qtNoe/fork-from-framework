@@ -11,17 +11,17 @@
         private array $mounts = [];
 
         public function __construct() {
-            $this->registerWebRootSource(config("z_framework_root") . "IncludedComponents/assets/");
-            $this->registerWebRootSource(config("z_frontend_root"));
-            BundledAssets::register($this);
-
-            // Module webroots are appended LAST, so they can add assets but
-            // never shadow existing ones. NOTE: the proxy has always been
-            // framework-first, the inverse of the userspace-first precedence
-            // used everywhere else; align it in the next major.
+            // Mount order follows the global precedence: modules first (in
+            // module order), framework layers after. The application's own
+            // webroot/ is served by the web server before PHP ever runs, so
+            // userspace keeps the top of the chain without a mount here.
             foreach(Registry::moduleRoots("assets") as $moduleWebRoot) {
                 $this->registerWebRootSource($moduleWebRoot);
             }
+
+            $this->registerWebRootSource(config("z_framework_root") . "IncludedComponents/assets/");
+            $this->registerWebRootSource(config("z_frontend_root"));
+            BundledAssets::register($this);
         }
 
         /**
