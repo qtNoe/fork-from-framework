@@ -47,12 +47,16 @@ classes before surfacing them, sharing the `db_max_retries` budget (default
   serialization `40001`): the server already discarded the statement; the
   still-valid prepared statement is re-executed after a randomized 10-50 ms
   backoff.
-- **Connection loss** (`2002`, `2003`, `2006`, `2013`: a node died or the
-  mesh moved the endpoint): reconnect through the configured endpoint,
+- **Connection loss** (`1047`, `2002`, `2003`, `2006`, `2013`: a node died,
+  the mesh moved the endpoint, or a Galera node refuses service while
+  desynced as an SST/IST donor): reconnect through the configured endpoint,
   re-prepare, re-run, with attempt-scaled backoff (400 ms steps, capped at
   2 s) spanning a realistic failover window. Documented caveat: if a write
   was applied but its acknowledgment was lost, the re-run applies it again;
-  every `exec()` is auto-committed, so the exposure is one statement.
+  every `exec()` is auto-committed, so the exposure is one statement. For
+  `1047` the refusing node never executed the statement, so that re-run is
+  always safe; with `wsrep_sync_wait` enabled, donors answer reads with
+  `1047` during every node rejoin, making this classification essential.
   `connect()` bounds each attempt with a 5 s connect timeout and normalizes
   the PHP 8.0 false-return into the same exception the 8.1+ path throws.
 
