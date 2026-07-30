@@ -5,15 +5,7 @@
 // same-node produces a lock-wait timeout (1205) that exec() must retry,
 // cross-node certifies instantly and brute-force aborts the lock holder.
 describe('Database connection retry (cluster resilience)', () => {
-    before(() => {
-        cy.dbSeed();
-        // Pin the retry budget this spec's timing math depends on, instead
-        // of trusting whatever an earlier spec left in the config.
-        cy.saveConfigBackup();
-        cy.setConfigSetting('db_max_retries', '2');
-    });
-
-    after(() => cy.restoreConfigBackup());
+    before(() => cy.dbSeed());
 
     it('retries a lock-wait timeout before giving up', () => {
         // db_max_retries=2 with innodb_lock_wait_timeout=1s means 3 attempts
