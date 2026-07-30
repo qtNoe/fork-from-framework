@@ -37,7 +37,7 @@ version-migrator v1.3; framework-bundled views ship migrated in-repo.
   [Working With Agents](docs/contributing/agents/working-with-agents.md#render-engine-katana) for the
   adapter internals.
 
-## Work in progress: database cluster resilience (issue #80)
+## Database cluster resilience (issue #80)
 
 `Connection::exec()` in `src/Database/Connection.php` recovers two failure
 classes before surfacing them, sharing the `db_max_retries` budget (default
