@@ -28,14 +28,26 @@
         private function contendedUpdate(Response $res, bool $sameNode) {
             $frameworkNode = db()->exec("SELECT @@hostname AS h")->resultToArray()[0]["h"];
 
-            $lockNode = $sameNode
-                ? $frameworkNode
-                : array_values(array_diff(self::NODES, [$frameworkNode]))[0];
+            // Cross-node: any REACHABLE peer works; a node can legitimately be
+            // down or restarting right after the failover spec, so candidates
+            // are probed in order instead of assumed available.
+            $candidates = $sameNode
+                ? [$frameworkNode]
+                : array_values(array_diff(self::NODES, [$frameworkNode]));
 
-            $lockHolder = mysqli_connect($lockNode, config("dbusername"), config("dbpassword"), config("dbname"));
-            if(false === $lockHolder) {
-                throw new \RuntimeException("Probe could not connect to $lockNode: " . mysqli_connect_error());
+            $lockNode = null;
+            $lockHolder = null;
+            foreach($candidates as $candidate) {
+                $connection = $this->tryConnect($candidate);
+                if(is_null($connection)) continue;
+                $lockNode = $candidate;
+                $lockHolder = $connection;
+                break;
             }
+            if(is_null($lockHolder)) {
+                throw new \RuntimeException("Probe found no reachable lock node among: " . implode(", ", $candidates));
+            }
+
             $lockHolder->query("START TRANSACTION");
             $lockHolder->query("UPDATE test_retry SET v = v + 1 WHERE id = 1");
 
@@ -67,6 +79,17 @@
                 "elapsedMs" => round($elapsedMs),
                 "maxRetries" => db()->maxRetries,
             ]);
+        }
+
+        // Connection failures surface as warnings (PHP 8.0) or exceptions
+        // (PHP 8.1+ strict reporting); both simply mean "not this node".
+        private function tryConnect(string $node): ?\mysqli {
+            try {
+                $connection = @mysqli_connect($node, config("dbusername"), config("dbpassword"), config("dbname"));
+            } catch(\Throwable $unavailable) {
+                return null;
+            }
+            return false === $connection ? null : $connection;
         }
 
     }
