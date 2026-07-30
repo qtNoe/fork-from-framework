@@ -41,11 +41,16 @@
         private const RETRY_BACKOFF_MAX_US = 50_000;
 
         /**
-         * Client/server error codes meaning the connection itself is gone
-         * (endpoint moved by the mesh, node died, network blip). Recovered by
-         * reconnecting through the configured endpoint and re-preparing.
+         * Client/server error codes meaning this connection cannot serve the
+         * statement (endpoint moved by the mesh, node died, network blip, or
+         * a Galera node refusing service while desynced as an SST/IST donor).
+         * Recovered by reconnecting through the configured endpoint, which
+         * routes to a usable node, and re-preparing. For 1047 the refusing
+         * node never executed the statement, so that re-run is always safe;
+         * the lost-acknowledgment caveat only applies to 2006/2013.
          */
         private const CONNECTION_LOSS_ERROR_CODES = [
+            1047, // WSREP has not yet prepared node for application use
             2002, // Can't connect through socket / connection refused
             2003, // Can't connect to server on host
             2006, // Server has gone away
