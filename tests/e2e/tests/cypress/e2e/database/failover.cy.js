@@ -58,8 +58,6 @@ describe('Galera failover', () => {
             expect(body.rows, 'replicated data readable on the failover node').to.be.gte(0);
             expect(body.recoveredOn, 'recovery landed on a surviving node').to.not.eq(body.diedOn);
         });
-
-        cy.exec(`rm -f ${TARGET_FILE}`);
     });
 
     it('the cluster stays available while the killed node recovers', () => {

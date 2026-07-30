@@ -38,10 +38,9 @@
             $lockNode = null;
             $lockHolder = null;
             foreach($candidates as $candidate) {
-                $connection = $this->tryConnect($candidate);
-                if(is_null($connection)) continue;
+                $lockHolder = $this->tryConnect($candidate);
+                if(is_null($lockHolder)) continue;
                 $lockNode = $candidate;
-                $lockHolder = $connection;
                 break;
             }
             if(is_null($lockHolder)) {
@@ -89,7 +88,8 @@
             } catch(\Throwable $unavailable) {
                 return null;
             }
-            return false === $connection ? null : $connection;
+            if($connection === false) return null;
+            return $connection;
         }
 
     }

@@ -10,11 +10,7 @@
 
         public function action_status(Request $req, Response $res) {
             $rows = db()->exec("SHOW STATUS LIKE 'wsrep_%'")->resultToArray();
-
-            $status = [];
-            foreach($rows as $row) {
-                $status[$row["Variable_name"]] = $row["Value"];
-            }
+            $status = array_column($rows, "Value", "Variable_name");
 
             return $res->json([
                 "clusterSize" => (int) ($status["wsrep_cluster_size"] ?? 0),
@@ -29,13 +25,13 @@
         // a dead connection and must be recovered by the reconnect-retry in
         // Connection::exec().
         public function action_slowread(Request $req, Response $res) {
-            $node = db()->exec("SELECT @@hostname AS h")->resultToArray()[0]["h"];
+            $node = $this->currentNode();
             file_put_contents("galera-target-node.txt", $node);
 
             sleep(3);
 
             $count = db()->exec("SELECT COUNT(*) AS c FROM test_cluster")->resultToArray();
-            $recoveredOn = db()->exec("SELECT @@hostname AS h")->resultToArray()[0]["h"];
+            $recoveredOn = $this->currentNode();
 
             return $res->json([
                 "survived" => true,
@@ -55,6 +51,10 @@
                 "marker" => $marker,
                 "rows" => (int) $count[0]["c"],
             ]);
+        }
+
+        private function currentNode(): string {
+            return db()->exec("SELECT @@hostname AS h")->resultToArray()[0]["h"];
         }
 
     }
