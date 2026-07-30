@@ -42,7 +42,7 @@
          *
          */
         public function action_add(Request $req, Response $res): void {
-            $organization = Organization::add("org_add_NewOrganization_" . uniqid());
+            $organization = Organization::add("org_add_NewOrganization");
             $createdOrganizationDirect = $this->getOrganization($organization, false);
 
             $organization = Organization::byId($organization->id());
@@ -168,17 +168,17 @@
          *
          */
         public function action_addWithGroup(Request $req, Response $res): void {
-            $organization = Organization::add("org_addWithGroup_NewOrganization_" . uniqid(), true);
+            $organization = Organization::add("org_addWithGroup_NewOrganization", true);
             $group = $organization->getGroup();
 
             echo(json_encode([
                 "organization" => $this->getOrganization($organization, false, true),
-                "groupHasOrgNameSuffix" => $group !== null && $group->name() === $organization->name() . "_Group"
+                "groupHasOrgNameSuffix" => $group !== null && $group->name() === "org_addWithGroup_NewOrganization_Group"
             ]));
         }
 
         public function action_addWithoutGroup(Request $req, Response $res): void {
-            $organization = Organization::add("org_addWithoutGroup_NewOrganization_" . uniqid());
+            $organization = Organization::add("org_addWithoutGroup_NewOrganization");
             $this->echoOrganization($organization, false, true);
         }
 

@@ -199,7 +199,7 @@ class UserController extends z_controller {
     }
 
     public function action_add(Request $req, Response $res): void {
-        $user = User::add("user_add_" . uniqid() . "@cypress.test", "password123", new DateTime("2005-01-01 00:00:00"));
+        $user = User::add("user_add@cypress.test", "password123", new DateTime("2005-01-01 00:00:00"));
         $createdUserDirect = $this->getUser($user, false, false);
 
         $user = User::byId($user->id());
@@ -215,7 +215,7 @@ class UserController extends z_controller {
     }
 
     public function action_addWithoutPassword(Request $req, Response $res): void {
-        $user = User::add("user_addWithoutPassword_" . uniqid() . "@cypress.test", null, new DateTime("2005-01-01 00:00:00"));
+        $user = User::add("user_addWithoutPassword@cypress.test", null, new DateTime("2005-01-01 00:00:00"));
         $createdUserDirect = $this->getUser($user, false, false);
 
         $user = User::byId($user->id());

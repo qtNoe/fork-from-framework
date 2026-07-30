@@ -170,14 +170,16 @@ describe('Permission System - User', () => {
 
     it('should be possible to create a new role', () => {
         requestJson('/role/add').then((output) => {
-            // The id is auto-generated at request time (Galera interleaves ids
-            // per node) and the name carries a unique suffix so an automatic
-            // test retry cannot collide with the previous attempt's row.
-            const direct = output.createdRoleDirect;
-            expect(direct).to.have.all.keys("id", "name");
-            expect(direct.id).to.be.a('number').and.be.greaterThan(0);
-            expect(direct.name).to.match(/^role_add_NewRole_/);
-            expect(output.createdRoleGet).to.deep.equal(direct);
+            expect(output).to.deep.equal({
+                "createdRoleDirect":{
+                    "id": 330,
+                    "name": "role_add_NewRole"
+                },
+                "createdRoleGet":{
+                    "id": 330,
+                    "name": "role_add_NewRole"
+                }
+            });
         });
     });
 
