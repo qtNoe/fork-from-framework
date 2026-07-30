@@ -211,26 +211,15 @@
             $types = "";
             $values = [];
             foreach($bindings as $binding) {
-                $value = $binding['value'];
-                $values[] = $value;
+                $values[] = $binding['value'];
 
-                // Determine the type for the binding
-                switch($binding['type']) {
-                    case 'integer':
-                    case 'biginteger':
-                    case 'smallinteger':
-                        $types .= 'i';
-                        break;
-                    case 'float':
-                    case 'decimal':
-                        $types .= 'd';
-                        break;
-                    case 'string':
-                    case 'text':
-                    default:
-                        $types .= 's';
-                        break;
-                }
+                // Determine the mysqli bind type; strings and unknown
+                // types bind as strings, which MySQL coerces safely.
+                $types .= match($binding['type']) {
+                    'integer', 'biginteger', 'smallinteger' => 'i',
+                    'float', 'decimal' => 'd',
+                    default => 's',
+                };
             }
 
             // Execute the query with the bindings
@@ -251,87 +240,7 @@
             array_shift($bindArgs);
 
             $queryStart = microtime(true);
-            // Two failure classes are recovered here, sharing the
-            // db_max_retries budget:
-            //
-            // 1. Transient cluster errors (deadlocks, lock-wait timeouts,
-            //    Galera serialization conflicts): the server already discarded
-            //    the statement, so re-executing the still-valid prepared
-            //    statement after a short randomized backoff is safe.
-            // 2. Connection loss (the mesh moved the endpoint, a node died):
-            //    reconnect through the configured endpoint, re-prepare, and
-            //    re-run. Backoff grows per attempt so the budget spans a real
-            //    failover window. Caveat, documented: if the server applied a
-            //    write but the connection died before the acknowledgment, the
-            //    re-run applies it again. Every exec() is auto-committed, so
-            //    the window is a single statement.
-            //
-            // Prepare failures inside the loop keep the "SQL Error" prefix
-            // (deterministic failures behave exactly as before); execute
-            // failures keep "SQL Execution Error".
-            $attempt = 0;
-            $needsReconnect = false;
-            $needsPrepare = true;
-            while(true) {
-                try {
-                    if($needsReconnect) {
-                        $this->connect();
-                        $needsReconnect = false;
-                    }
-                    if($needsPrepare) {
-                        if(!$this->prepareAndBind($query, $bindArgs)) {
-                            // PHP 8.0 (non-STRICT reporting): prepare()
-                            // returned false with the error on the connection.
-                            if($this->shouldReconnect($attempt, $this->conn->errno)) {
-                                $attempt++;
-                                $needsReconnect = true;
-                                usleep($this->reconnectBackoffUs($attempt));
-                                continue;
-                            }
-                            throw new \Exception("SQL Error: " . $this->conn->error . "\nQuery: " . $query);
-                        }
-                        $needsPrepare = false;
-                    }
-                    $executionResult = $this->stmt->execute();
-                } catch(\mysqli_sql_exception $e) {
-                    // PHP 8.1+ default reporting throws here, for prepare,
-                    // execute, and reconnect failures alike.
-                    $phase = $needsPrepare ? "SQL Error" : "SQL Execution Error";
-                    if($this->shouldRetry($attempt, $e->getCode(), $this->sqlStateOf($e))) {
-                        $attempt++;
-                        usleep(random_int(self::RETRY_BACKOFF_MIN_US, self::RETRY_BACKOFF_MAX_US));
-                        continue;
-                    }
-                    if($this->shouldReconnect($attempt, (int) $e->getCode())) {
-                        $attempt++;
-                        $needsReconnect = true;
-                        $needsPrepare = true;
-                        usleep($this->reconnectBackoffUs($attempt));
-                        continue;
-                    }
-                    throw new \Exception($phase . ": " . $e->getMessage() . "\nQuery: " . $query, 0, $e);
-                }
-
-                // PHP 8.0 (non-STRICT reporting) returns false and sets errno
-                // instead of throwing; route it through the same retry logic.
-                if(false === $executionResult) {
-                    if($this->shouldRetry($attempt, $this->stmt->errno, $this->stmt->sqlstate)) {
-                        $attempt++;
-                        usleep(random_int(self::RETRY_BACKOFF_MIN_US, self::RETRY_BACKOFF_MAX_US));
-                        continue;
-                    }
-                    if($this->shouldReconnect($attempt, $this->stmt->errno)) {
-                        $attempt++;
-                        $needsReconnect = true;
-                        $needsPrepare = true;
-                        usleep($this->reconnectBackoffUs($attempt));
-                        continue;
-                    }
-                    throw new \Exception("SQL Execution Error: " . $this->stmt->error . "\nQuery: " . $query);
-                }
-
-                break;
-            }
+            $this->execWithRecovery($query, $bindArgs);
             $queryDuration = (microtime(true) - $queryStart) * 1000;
 
             $this->insertId = $this->conn->insert_id;
@@ -375,24 +284,96 @@
         }
 
         /**
-         * Prepares the statement and binds the arguments. Returns false only
-         * on the PHP 8.0 non-throwing path, with the error on the connection.
+         * Runs the statement until it succeeds, recovering two failure
+         * classes within the shared db_max_retries budget:
+         *
+         * - Transient contention (RETRYABLE_ERROR_CODES): the server already
+         *   rolled the statement back, so re-running it on the kept
+         *   connection after a short randomized backoff is safe.
+         * - Connection loss (CONNECTION_LOSS_ERROR_CODES): reconnect through
+         *   the configured endpoint, which routes to a usable node, then
+         *   re-prepare and re-run. Documented caveat: if a write was applied
+         *   but the connection died before the acknowledgment, the re-run
+         *   applies it again; every exec() is auto-committed, so the exposure
+         *   is a single statement.
          */
-        private function prepareAndBind(string $query, array $bindArgs): bool {
-            $preparationResult = $this->conn->prepare($query);
-            if(is_bool($preparationResult)) return false;
+        private function execWithRecovery(string $query, array $bindArgs): void {
+            $attempt = 0;
+            $reconnect = false;
 
-            $this->stmt = $preparationResult;
+            while(true) {
+                $failure = $this->attemptStatement($query, $bindArgs, $reconnect);
+                if(is_null($failure)) return;
 
-            if(!empty($bindArgs)) {
+                if($this->shouldRetry($attempt, $failure["errorCode"], $failure["sqlState"])) {
+                    $attempt++;
+                    // A transient failure always leaves a live connection:
+                    // connect() failures only carry connection-loss codes,
+                    // never transient ones, so no reconnect is needed here.
+                    $reconnect = false;
+                    usleep(random_int(self::RETRY_BACKOFF_MIN_US, self::RETRY_BACKOFF_MAX_US));
+                    continue;
+                }
+
+                if($this->shouldReconnect($attempt, $failure["errorCode"])) {
+                    $attempt++;
+                    $reconnect = true;
+                    usleep($this->reconnectBackoffUs($attempt));
+                    continue;
+                }
+
+                throw $failure["exception"];
+            }
+        }
+
+        /**
+         * Makes one attempt at the statement: reconnect when asked to,
+         * prepare, bind, execute. Returns null on success and a failure
+         * descriptor (see failure()) otherwise.
+         *
+         * mysqli reports failures by throwing under PHP 8.1+ strict
+         * reporting and by return value on PHP 8.0; both are captured here,
+         * reading the SQLSTATE from the handle that recorded it.
+         */
+        private function attemptStatement(string $query, array $bindArgs, bool $reconnect): ?array {
+            try {
+                $errorPrefix = "SQL Error";
+                if($reconnect) $this->connect();
+
+                $statement = $this->conn->prepare($query);
+                if(is_bool($statement)) {
+                    return $this->failure($errorPrefix, $this->conn->errno, $this->conn->sqlstate, $this->conn->error, $query);
+                }
+                $this->stmt = $statement;
+
                 // PHP 8's mysqli throws ArgumentCountError / ValueError when
                 // the type string or value count doesn't match the prepared
                 // statement; bind_param() no longer returns false in any
-                // reachable scenario, so a wrapping `if(false === ...)` check
-                // would be dead code.
-                $this->stmt->bind_param(...$bindArgs);
+                // reachable scenario.
+                if(!empty($bindArgs)) $this->stmt->bind_param(...$bindArgs);
+
+                $errorPrefix = "SQL Execution Error";
+                if(!$this->stmt->execute()) {
+                    return $this->failure($errorPrefix, $this->stmt->errno, $this->stmt->sqlstate, $this->stmt->error, $query);
+                }
+                return null;
+            } catch(\mysqli_sql_exception $error) {
+                return $this->failure($errorPrefix, (int) $error->getCode(), $this->sqlStateOf($error), $error->getMessage(), $query, $error);
             }
-            return true;
+        }
+
+        /**
+         * Failure descriptor for one statement attempt, carrying what the
+         * recovery decision needs and the ready-to-throw exception with the
+         * historical prefix: "SQL Error" for connect and prepare failures,
+         * "SQL Execution Error" for execute failures.
+         */
+        private function failure(string $errorPrefix, int $errorCode, ?string $sqlState, string $message, string $query, ?\mysqli_sql_exception $error = null): array {
+            return [
+                "errorCode" => $errorCode,
+                "sqlState" => $sqlState,
+                "exception" => new \Exception($errorPrefix . ": " . $message . "\nQuery: " . $query, 0, $error),
+            ];
         }
 
         /**
@@ -430,14 +411,15 @@
         }
 
         /**
-         * Reads the SQLSTATE from a mysqli exception. mysqli_sql_exception::getSqlState()
-         * only exists on PHP 8.1+, so on 8.0 we fall back to the statement handle,
-         * which still carries the SQLSTATE of the last error.
+         * Reads the SQLSTATE from a thrown mysqli exception, where
+         * mysqli_sql_exception::getSqlState() only exists on PHP 8.1+.
+         * Exceptions without it are classified by error code alone; failures
+         * reported by return value never reach this method, their SQLSTATE
+         * is read off the failing handle in attemptStatement().
          */
-        private function sqlStateOf(\mysqli_sql_exception $e): ?string {
-            if(method_exists($e, "getSqlState")) return $e->getSqlState();
-            if(isset($this->stmt)) return $this->stmt->sqlstate;
-            return $this->conn->sqlstate ?? null;
+        private function sqlStateOf(\mysqli_sql_exception $error): ?string {
+            if(method_exists($error, "getSqlState")) return $error->getSqlState();
+            return null;
         }
 
         public function executeMultiQuery(string $query, bool $throwOnFailure = true): bool {
