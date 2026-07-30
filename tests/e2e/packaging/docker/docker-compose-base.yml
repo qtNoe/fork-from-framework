@@ -38,6 +38,22 @@ x-built-application-image: &built-application-image
     database:
       condition: service_healthy
 
+x-galera-node: &galera-node
+  image: mariadb:11.8
+  restart: on-failure
+  environment: &galera-environment
+    MARIADB_ROOT_PASSWORD: root_password
+    TZ: Europe/Berlin
+  # The image's healthcheck.sh cannot be used: its credentials live in the
+  # datadir, which SST replaces with the donor's copy on joiner nodes. This
+  # check also asserts the node is actually part of a synced cluster.
+  healthcheck:
+    test: mariadb -uroot -proot_password --silent -e "SHOW STATUS LIKE 'wsrep_ready'" | grep -q ON
+    interval: 2s
+    timeout: 5s
+    retries: 60
+    start_period: 30s
+
 services:
   # Application
   application:
@@ -80,10 +96,9 @@ services:
         condition: service_healthy
 
   galera1:
+    <<: *galera-node
     container_name: galera1
     hostname: galera1
-    image: mariadb:11.8
-    restart: on-failure
     # Bootstrap the cluster only on first initialization (empty datadir).
     # On any later start the node must JOIN the running cluster instead;
     # passing --wsrep-new-cluster then would attempt a split bootstrap.
@@ -92,58 +107,37 @@ services:
     # in): the loud hint below names the fix, `npm run stop` then start.
     command: >
       sh -c 'if [ ! -d /var/lib/mysql/mysql ];
-      then exec docker-entrypoint.sh mariadbd --wsrep-new-cluster;
-      elif [ ! -f /var/lib/mysql/gvwstate.dat ] && grep -q "safe_to_bootstrap: 0" /var/lib/mysql/grastate.dat 2>/dev/null;
-      then echo "E2E GALERA HINT: stale volume without a running cluster; run \"npm run stop\" (removes volumes) and \"npm run start\" fresh." >&2;
-      exec docker-entrypoint.sh mariadbd;
-      else exec docker-entrypoint.sh mariadbd; fi'
+      then exec docker-entrypoint.sh mariadbd --wsrep-new-cluster; fi;
+      if [ ! -f /var/lib/mysql/gvwstate.dat ] && grep -q "safe_to_bootstrap: 0" /var/lib/mysql/grastate.dat 2>/dev/null;
+      then echo "E2E GALERA HINT: stale volume without a running cluster; run \"npm run stop\" (removes volumes) and \"npm run start\" fresh." >&2; fi;
+      exec docker-entrypoint.sh mariadbd'
     environment:
+      <<: *galera-environment
       MARIADB_DATABASE: app
       MARIADB_USER: app
       MARIADB_PASSWORD: app_password
-      MARIADB_ROOT_PASSWORD: root_password
-      TZ: Europe/Berlin
     volumes:
       - mariadb1:/var/lib/mysql
       - ./galera.cnf:/etc/mysql/conf.d/z-galera.cnf:ro
-    # The image's healthcheck.sh cannot be used: its credentials live in the
-    # datadir, which SST replaces with the donor's copy on joiner nodes. This
-    # check also asserts the node is actually part of a synced cluster.
-    healthcheck: &galera-healthcheck
-      test: mariadb -uroot -proot_password --silent -e "SHOW STATUS LIKE 'wsrep_ready'" | grep -q ON
-      interval: 2s
-      timeout: 5s
-      retries: 60
-      start_period: 30s
 
   galera2:
+    <<: *galera-node
     container_name: galera2
     hostname: galera2
-    image: mariadb:11.8
-    restart: on-failure
-    environment:
-      MARIADB_ROOT_PASSWORD: root_password
-      TZ: Europe/Berlin
     volumes:
       - mariadb2:/var/lib/mysql
       - ./galera.cnf:/etc/mysql/conf.d/z-galera.cnf:ro
-    healthcheck: *galera-healthcheck
     depends_on:
       galera1:
         condition: service_healthy
 
   galera3:
+    <<: *galera-node
     container_name: galera3
     hostname: galera3
-    image: mariadb:11.8
-    restart: on-failure
-    environment:
-      MARIADB_ROOT_PASSWORD: root_password
-      TZ: Europe/Berlin
     volumes:
       - mariadb3:/var/lib/mysql
       - ./galera.cnf:/etc/mysql/conf.d/z-galera.cnf:ro
-    healthcheck: *galera-healthcheck
     depends_on:
       galera2:
         condition: service_healthy
