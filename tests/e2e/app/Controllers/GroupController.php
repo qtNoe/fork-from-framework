@@ -104,7 +104,7 @@
         }
 
         public function action_add(Request $req, Response $res): void {
-            $group = Group::add("group_add_NewGroup");
+            $group = Group::add("group_add_NewGroup_" . uniqid());
             $createdGroupDirect = $this->getGroup($group, false, false);
 
             $group = Group::byId($group->id());

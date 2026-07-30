@@ -103,7 +103,7 @@
         }
 
         public function action_add(Request $req, Response $res): void {
-            $role = Role::add("role_add_NewRole");
+            $role = Role::add("role_add_NewRole_" . uniqid());
             $createdRoleDirect = $this->getRole($role, false, false);
 
             $role = Role::byId($role->id());

@@ -245,27 +245,27 @@ describe('Permission System - User', () => {
         requestJson('/user/add').then((output) => {
             // The exact id depends on the cluster's auto-increment offset,
             // but it always comes from the range pinned in 9_auto_increment.sql.
-            expect(output.createdUserDirect.id).to.be.at.least(10000);
-            expect(output.createdUserDirect).to.deep.equal({
-                id: output.createdUserDirect.id,
-                email: 'user_add@cypress.test',
-                isVerified: true,
-                verified: '2005-01-01 00:00:00',
-            });
-            expect(output.createdUserGet).to.deep.equal(output.createdUserDirect);
+            const direct = output.createdUserDirect;
+            expect(direct.id).to.be.at.least(10000);
+            expect(direct).to.have.all.keys("id", "email", "isVerified", "verified");
+            // Unique suffix keeps an automatic test retry from colliding.
+            expect(direct.email).to.match(/^user_add_.+@cypress\.test$/);
+            expect(direct.isVerified).to.equal(true);
+            expect(direct.verified).to.equal('2005-01-01 00:00:00');
+            expect(output.createdUserGet).to.deep.equal(direct);
             expect(output.passwordWorking).to.equal(true);
         });
     });
 
     it('should add a user without a password (null password)', () => {
         requestJson('/user/addWithoutPassword').then((output) => {
-            expect(output.createdUserDirect).to.deep.equal({
-                id: output.createdUserDirect.id,
-                email: 'user_addWithoutPassword@cypress.test',
-                isVerified: true,
-                verified: '2005-01-01 00:00:00',
-            });
-            expect(output.createdUserGet).to.deep.equal(output.createdUserDirect);
+            const direct = output.createdUserDirect;
+            expect(direct).to.have.all.keys("id", "email", "isVerified", "verified");
+            // Unique suffix keeps an automatic test retry from colliding.
+            expect(direct.email).to.match(/^user_addWithoutPassword_.+@cypress\.test$/);
+            expect(direct.isVerified).to.equal(true);
+            expect(direct.verified).to.equal('2005-01-01 00:00:00');
+            expect(output.createdUserGet).to.deep.equal(direct);
             expect(output.passwordIsNull).to.equal(true);
             expect(output.saltIsNull).to.equal(true);
             expect(output.schemeIsNull).to.equal(true);

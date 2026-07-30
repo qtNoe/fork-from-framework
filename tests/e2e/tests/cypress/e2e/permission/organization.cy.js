@@ -60,7 +60,7 @@ describe('Permission System - Organization', () => {
             const direct = output.createdOrganizationDirect;
             expect(direct).to.have.all.keys("id", "name");
             expect(direct.id).to.be.at.least(10000);
-            expect(direct.name).to.equal("org_add_NewOrganization");
+            expect(direct.name).to.match(/^org_add_NewOrganization_/);
             expect(output.createdOrganizationGet).to.deep.equal(direct);
         });
     });
@@ -186,7 +186,7 @@ describe('Permission System - Organization', () => {
         requestJson('/organization/addWithoutGroup').then((output) => {
             expect(output).to.have.all.keys("id", "name", "group");
             expect(output.id).to.be.at.least(10000);
-            expect(output.name).to.equal("org_addWithoutGroup_NewOrganization");
+            expect(output.name).to.match(/^org_addWithoutGroup_NewOrganization_/);
             expect(output.group).to.equal(null);
         });
     });
@@ -194,9 +194,9 @@ describe('Permission System - Organization', () => {
     it('should create and link a group when add() is called with createGroup=true', () => {
         requestJson('/organization/addWithGroup').then((output) => {
             expect(output.organization.id).to.be.at.least(10000);
-            expect(output.organization.name).to.equal("org_addWithGroup_NewOrganization");
+            expect(output.organization.name).to.match(/^org_addWithGroup_NewOrganization_/);
             expect(output.organization.group).to.not.equal(null);
-            expect(output.organization.group.name).to.equal("org_addWithGroup_NewOrganization_Group");
+            expect(output.organization.group.name).to.match(/^org_addWithGroup_NewOrganization_.+_Group$/);
             expect(output.groupHasOrgNameSuffix).to.equal(true);
         });
     });

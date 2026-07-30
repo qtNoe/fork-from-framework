@@ -170,10 +170,14 @@ describe('Permission System - Group', () => {
 
     it('should be possible to create a new group', () => {
         requestJson('/group/add').then((output) => {
-            expect(output).to.deep.equal({
-                "createdGroupDirect": {"id": 330, "name": "group_add_NewGroup"},
-                "createdGroupGet": {"id": 330, "name": "group_add_NewGroup"}
-            });
+            // The id is auto-generated at request time (Galera interleaves ids
+            // per node) and the name carries a unique suffix so an automatic
+            // test retry cannot collide with the previous attempt's row.
+            const direct = output.createdGroupDirect;
+            expect(direct).to.have.all.keys("id", "name");
+            expect(direct.id).to.be.a('number').and.be.greaterThan(0);
+            expect(direct.name).to.match(/^group_add_NewGroup_/);
+            expect(output.createdGroupGet).to.deep.equal(direct);
         });
     });
 
