@@ -44,8 +44,8 @@ classes before surfacing them, sharing the `db_max_retries` budget (default
 `3`, `0` disables):
 
 - **Transient contention** (deadlock `1213`, lock-wait timeout `1205`, Galera
-  serialization `40001`): the server already discarded the statement; the
-  still-valid prepared statement is re-executed after a randomized 10-50 ms
+  serialization `40001`): the server already discarded the statement; it is
+  re-prepared and re-run on the kept connection after a randomized 10-50 ms
   backoff.
 - **Connection loss** (`1047`, `2002`, `2003`, `2006`, `2013`: a node died,
   the mesh moved the endpoint, or a Galera node refuses service while
@@ -59,6 +59,10 @@ classes before surfacing them, sharing the `db_max_retries` budget (default
   `1047` during every node rejoin, making this classification essential.
   `connect()` bounds each attempt with a 5 s connect timeout and normalizes
   the PHP 8.0 false-return into the same exception the 8.1+ path throws.
+  The recovery loop lives in `execWithRecovery()` with a single
+  classification point; `attemptStatement()` makes one self-contained
+  attempt and folds PHP 8.0 false-returns and PHP 8.1+ exceptions into one
+  failure descriptor, reading the SQLSTATE off the handle that recorded it.
 
 Operational contract, learned the hard way: a MySQL client waiting for the
 server greeting has **no read timeout**, so the database endpoint (mesh,
