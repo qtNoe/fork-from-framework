@@ -88,10 +88,14 @@ services:
     # On any later start the node must JOIN the running cluster instead;
     # passing --wsrep-new-cluster then would attempt a split bootstrap.
     # A cold start of the whole stack with non-empty volumes is not a
-    # supported path: `npm run stop` removes the volumes.
+    # supported path (fresh containers cannot rejoin a cluster nobody is
+    # in): the loud hint below names the fix, `npm run stop` then start.
     command: >
       sh -c 'if [ ! -d /var/lib/mysql/mysql ];
       then exec docker-entrypoint.sh mariadbd --wsrep-new-cluster;
+      elif [ ! -f /var/lib/mysql/gvwstate.dat ] && grep -q "safe_to_bootstrap: 0" /var/lib/mysql/grastate.dat 2>/dev/null;
+      then echo "E2E GALERA HINT: stale volume without a running cluster; run \"npm run stop\" (removes volumes) and \"npm run start\" fresh." >&2;
+      exec docker-entrypoint.sh mariadbd;
       else exec docker-entrypoint.sh mariadbd; fi'
     environment:
       MARIADB_DATABASE: app
