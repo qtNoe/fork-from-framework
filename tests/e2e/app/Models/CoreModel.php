@@ -37,9 +37,19 @@
         }
 
         public function getModelLastId() {
+            // The generated id depends on the cluster's auto-increment offset,
+            // so the contract is asserted as identity: getInsertId() must name
+            // the row this INSERT created (read back as the table's maximum,
+            // which is this row: the suite runs no concurrent inserts).
             $sql = "INSERT INTO `model_test_lastid` (`value`)
                     VALUES ('LastId')";
-            return $this->exec($sql)->getInsertId();
+            $insertId = (int) $this->exec($sql)->getInsertId();
+
+            $readBack = (int) $this->exec("SELECT MAX(`id`) AS m FROM `model_test_lastid`")
+                ->resultToArray()[0]["m"];
+
+            if($insertId > 0 && $insertId === $readBack) return "lastid-consistent";
+            return "lastid-mismatch:$insertId:$readBack";
         }
 
         public function insertLargeFile() {

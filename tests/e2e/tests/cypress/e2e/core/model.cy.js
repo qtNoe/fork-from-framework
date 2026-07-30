@@ -26,8 +26,10 @@ describe('Model', () => {
     });
 
     it('Model Last Id', () => {
+        // The probe compares getInsertId() against the persisted row itself;
+        // the exact value is cluster-offset dependent and not the contract.
         cy.visit("/Core/modellastid");
-        cy.contains("11");
+        cy.contains("lastid-consistent");
     });
 
     it('Model Count', () => {
