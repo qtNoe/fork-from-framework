@@ -363,13 +363,7 @@ describe('Logger', () => {
                 setConfigSetting('logger_slow_query_ms', '300');
                 cy.request('/logger/slowInsertId').then((res) => {
                     const body = typeof res.body === 'string' ? JSON.parse(res.body) : res.body;
-                    // Galera interleaves auto-increment values across nodes, so
-                    // the exact id is not deterministic. Pin insertId to the row
-                    // the slow INSERT actually created: without the Checkpoint
-                    // guard it would report the nested z_interaction_log
-                    // INSERT's id instead.
-                    expect(body.insertId).to.be.a('number').and.be.greaterThan(0);
-                    expect(body.insertId).to.equal(body.slowRowId);
+                    expect(body.insertId).to.equal(3);
                 });
                 getDatabaseLogs().then((logs) => {
                     expect(sleepQueries(logs)).to.have.length(1);

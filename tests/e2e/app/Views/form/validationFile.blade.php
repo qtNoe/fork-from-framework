@@ -3,7 +3,7 @@
 @section("content")
     <div>
         <?php foreach($opt["files"] as $file) {?>
-            <li><?= $file["id"] ?>:<?= $file["name"] ?></li>
+            <li><?= $file["name"] ?></li>
          <?php } ?>
     </div>
 

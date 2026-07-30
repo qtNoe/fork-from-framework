@@ -3,5 +3,5 @@ CREATE TABLE `migration_import` (
     `name` VARCHAR(255) NOT NULL
 );
 
-INSERT INTO `migration_import` (`id`, `name`) VALUES
-(1, 'Test Entry 1'), (2, 'Test Entry 2');
+INSERT INTO `migration_import` (`name`) VALUES
+('Test Entry 1'), ('Test Entry 2');
