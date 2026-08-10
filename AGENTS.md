@@ -64,6 +64,26 @@ classes before surfacing them, sharing the `db_max_retries` budget (default
   attempt and folds PHP 8.0 false-returns and PHP 8.1+ exceptions into one
   failure descriptor, reading the SQLSTATE off the handle that recorded it.
 
+Transport settings live in `src/Database/Endpoint.php`, a request-wide
+singleton (`Endpoint::get()`) shared by the runtime connection and the
+migrations' Doctrine DBAL connection (the DBAL parameter mapping stays in
+the DbalConnection trait): `dbhost`, `dbport` and `db_ssl`. mysqli matches the **whole** `dbhost` string against the
+TLS certificate, so with `db_ssl` a `host:port` value is rejected with an
+error pointing to `dbport`. **mysqli verifies nothing unless it is handed
+a certificate authority and never falls back to the system trust store on
+its own** (measured on PHP 8.0 mysqlnd), so `db_ssl = true` resolves that
+store via `openssl_get_cert_locations()` and throws rather than
+downgrading when none is found; there is deliberately no CA setting, a
+private authority goes into the system store or `openssl.cafile`.
+`db_persistent` prefixes the host
+with `p:`; safe next to the retry logic (mysqli resets reused connections
+and replaces dead ones; the failover spec passes with it on), opt-in
+because a worker then sticks to the node it first reached. **The pool key
+excludes the transport** (measured), so changing `db_ssl` needs a worker
+reload; the e2e suite runs with `db_persistent = true`, and the TLS cases
+in `ConnectionProbeController` force it off for their own connections for
+exactly this reason.
+
 Operational contract, learned the hard way: a MySQL client waiting for the
 server greeting has **no read timeout**, so the database endpoint (mesh,
 haproxy) must close sessions to dead backends quickly; the e2e proxy config
@@ -88,6 +108,18 @@ replication to every node, a request surviving a mid-flight kill of the
 exact node it landed on, and the two lock-conflict semantics: same-node
 lock-wait retries and cross-node certification, where Galera row locks do
 not span nodes).
+
+The nodes also serve TLS, with committed test-only certificates
+(`packaging/docker/tls/`, ~100-year validity; the certificate covers the
+proxy endpoint and every node name, because the client dials the endpoint
+while a node answers), and the application image trusts the suite's CA in
+its system store (Dockerfile.apache-local), mirroring production where
+the store knows the public issuer. The cluster only *offers* TLS, so the
+suite keeps covering the plaintext default; the TLS cases in
+`tests/cypress/e2e/database/connection.cy.js` flip `require_secure_transport`
+on for their own duration to exercise the production rule, including
+migrations, and the wrong-host negative case is what proves verification
+is real.
 
 **Open decisions for review:** retries default-on (current) vs opt-in;
 retry logging/metrics (skipped so far to avoid the slow-query logger's
