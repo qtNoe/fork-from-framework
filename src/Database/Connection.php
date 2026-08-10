@@ -78,10 +78,10 @@
         public int $connectTimeout;
         public int $maxRetries;
 
-        private ?string $host;
         private ?string $password;
         private ?string $user;
         private ?string $database;
+        private bool $persistent;
 
         public function __construct() {
             $this->booter = zubzet();
@@ -106,19 +106,21 @@
             }
             $this->maxRetries = max(0, (int) $maxRetries);
 
-            $this->host = config("dbhost");
             $this->user = config("dbusername");
             $this->password = config("dbpassword");
             $this->database = config("dbname");
+            $this->persistent = filter_var(config("db_persistent", default: false), FILTER_VALIDATE_BOOLEAN);
         }
 
         private function connect() {
             // Make sure no previous connection exists
             $this->disconnect();
 
+            $endpoint = Endpoint::get();
+
             // Validate that all required config keys are present if using the database connection
             $missing = array_keys(array_filter([
-                'dbhost' => $this->host,
+                'dbhost' => $endpoint->host,
                 'dbusername' => $this->user,
                 'dbpassword' => $this->password,
                 'dbname' => $this->database,
@@ -136,18 +138,48 @@
             $conn = mysqli_init();
             $conn->options(MYSQLI_OPT_CONNECT_TIMEOUT, self::CONNECT_TIMEOUT_SECONDS);
 
-            // PHP 8.1+ strict reporting throws its own mysqli_sql_exception;
-            // on PHP 8.0 real_connect() returns false instead. Normalize the
-            // failure so both versions surface the same exception type and the
-            // caller's retry classification sees the real error code.
-            $connected = $conn->real_connect(
-                $this->host,
-                $this->user,
-                $this->password,
-                $this->database,
-            );
+            // Transport encryption (db_ssl), off unless configured.
+            $flags = $endpoint->applyTls($conn);
+
+            // db_persistent: the "p:" prefix makes the PHP worker keep the
+            // connection open across requests and skip the handshake. mysqli
+            // resets a reused connection and replaces a dead one; opt-in
+            // because a worker then stays on the node it first reached.
+            // Prefixed on a local copy: connect() runs again on every
+            // reconnect, and the endpoint is shared with the migrations.
+            $host = $endpoint->host;
+            if($this->persistent) $host = "p:" . $host;
+
+            // PHP 8.1+ strict reporting throws a mysqli_sql_exception naming
+            // the real failure; PHP 8.0 returns false and raises warnings
+            // instead, leaving connect_error empty for TLS failures. Collect
+            // the warnings and normalize, so both versions throw the same
+            // exception with the same message and the caller's retry
+            // classification sees the real error code.
+            // Positional arguments because mysqli renamed its parameters
+            // between PHP versions.
+            $warnings = [];
+            set_error_handler(function(int $severity, string $message) use (&$warnings): bool {
+                $warnings[] = $message;
+                return true;
+            });
+            try {
+                $connected = $conn->real_connect(
+                    $host,
+                    $this->user,
+                    $this->password,
+                    $this->database,
+                    $endpoint->port,
+                    null,
+                    $flags,
+                );
+            } finally {
+                restore_error_handler();
+            }
             if(false === $connected || $conn->connect_errno) {
-                throw new \mysqli_sql_exception((string) $conn->connect_error, (int) $conn->connect_errno);
+                $message = (string) $conn->connect_error;
+                if("" === $message) $message = (string) ($warnings[0] ?? "");
+                throw new \mysqli_sql_exception($message, (int) $conn->connect_errno);
             }
 
             $this->conn = $conn;
