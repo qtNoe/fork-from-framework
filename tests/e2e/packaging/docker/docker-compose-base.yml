@@ -7,7 +7,9 @@ x-config-z-settings: &config-z-settings
   CONFIG_ROOTDIRECTORY: ""
 
   ## Database
-  CONFIG_DBHOST: database:3306
+  # A bare hostname (no :port), so the TLS spec can enable db_ssl, which
+  # verifies the certificate against this value.
+  CONFIG_DBHOST: database
   CONFIG_DBNAME: app
   CONFIG_DBPASSWORD: app_password
   CONFIG_DBUSERNAME: app
@@ -68,9 +70,10 @@ services:
   # (MariaDB 11.8, mariabackup SST, server-side autocommit retries, enforced
   # InnoDB, autoinc lock mode 2). The "database" service is an haproxy playing
   # the production service mesh: the application talks to ONE endpoint and the
-  # proxy routes it to a healthy node, killing sessions on failover. Transport
-  # differences vs production (WireGuard, require_secure_transport) are
-  # intentionally not reproduced inside the compose network.
+  # proxy routes it to a healthy node, killing sessions on failover. WireGuard
+  # is not reproduced inside the compose network; client TLS is offered via
+  # committed test-only certificates (./tls), and the TLS spec flips
+  # require_secure_transport on for its own duration.
   #
   # The stack always bootstraps fresh: `npm run stop` removes the volumes, so
   # galera1's --wsrep-new-cluster is safe. Never reuse these volumes across a
@@ -119,6 +122,7 @@ services:
     volumes:
       - mariadb1:/var/lib/mysql
       - ./galera.cnf:/etc/mysql/conf.d/z-galera.cnf:ro
+      - ./tls:/etc/mysql/tls:ro
 
   galera2:
     <<: *galera-node
@@ -127,6 +131,7 @@ services:
     volumes:
       - mariadb2:/var/lib/mysql
       - ./galera.cnf:/etc/mysql/conf.d/z-galera.cnf:ro
+      - ./tls:/etc/mysql/tls:ro
     depends_on:
       galera1:
         condition: service_healthy
@@ -138,6 +143,7 @@ services:
     volumes:
       - mariadb3:/var/lib/mysql
       - ./galera.cnf:/etc/mysql/conf.d/z-galera.cnf:ro
+      - ./tls:/etc/mysql/tls:ro
     depends_on:
       galera2:
         condition: service_healthy

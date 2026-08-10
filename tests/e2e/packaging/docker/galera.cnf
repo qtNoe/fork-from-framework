@@ -1,8 +1,8 @@
 # Mirrors the production Galera settings from the declarative infrastructure
 # (nixops hosts/database), adapted to the compose network. Differences vs
 # production are transport-level only and intentional:
-# - require_secure_transport / WireGuard are not reproduced inside the
-#   trusted compose network.
+# - WireGuard is not reproduced inside the compose network; client TLS is
+#   (see the ssl_* settings below).
 # - wsrep_sst_auth uses the compose root credentials instead of unix auth.
 
 [galera]
@@ -37,3 +37,11 @@ wsrep_auto_increment_control = OFF
 
 [mysqld]
 skip-name-resolve = ON
+
+# Encrypted client transport, as in production; the certificates are
+# committed test-only material (packaging/docker/tls, ~100-year validity).
+# TLS is offered, not required, so the default plaintext path stays
+# covered; the TLS spec flips require_secure_transport on itself.
+ssl_cert = /etc/mysql/tls/server.crt
+ssl_key = /etc/mysql/tls/server.key
+ssl_ca = /etc/mysql/tls/ca.crt
