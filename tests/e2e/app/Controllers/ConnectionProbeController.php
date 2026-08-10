@@ -350,11 +350,13 @@
          * these probes vary it within one request, so the cached instance is
          * cleared around every override. Test-only reflection, deliberately
          * not a framework API.
+         *
+         * setStaticPropertyValue() reaches the private property on every
+         * supported version: ReflectionProperty would need setAccessible()
+         * on 8.0, which is deprecated as of 8.5.
          */
         private static function resetEndpoint(): void {
-            $instance = new \ReflectionProperty(Endpoint::class, "instance");
-            $instance->setAccessible(true);
-            $instance->setValue(null, null);
+            (new \ReflectionClass(Endpoint::class))->setStaticPropertyValue("instance", null);
         }
 
         /**
