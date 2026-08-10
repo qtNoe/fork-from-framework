@@ -61,6 +61,20 @@ The file `dist/app.css` is then available at `/_zubzet/asset-proxy/ui-kit/app.cs
 lazy — the directory is only touched when a matching request arrives. Sources are checked in
 registration order, and the first match wins.
 
+## Module assets and resolution order
+
+Installed [modules](../advanced-features/modules.md) contribute their `webroot/` directories as
+sources automatically. The full chain is checked in this order, first match wins:
+
+1. Module `webroot/` sources, in module order
+1. Framework assets (`IncludedComponents/assets/`)
+1. The framework frontend directory (`Z.js`)
+1. Bundled Composer packages (jQuery, Bootstrap, Font Awesome)
+1. Sources you register via `registerWebRootSource()`
+
+A module can therefore shadow a framework asset. Your application's own `webroot/` is not part of
+this chain: the web server serves it directly, before PHP runs, so it always wins for real files.
+
 ## Security
 
 The proxy is designed to serve only files that live inside a registered source:
@@ -69,5 +83,7 @@ The proxy is designed to serve only files that live inside a registered source:
   result stays within the registered source directory, so `../` sequences and symlink escapes cannot
   reach files outside the mount.
 - **Only readable, existing files are served**; anything else returns `404`.
+- **Source and config extensions are never served.** Requests for `.php`, `.phtml`, or `.ini`
+  files return `404` from every source, including ones you register yourself.
 - **[Content types are detected](https://github.com/thephpleague/mime-type-detection)** with `league/mime-type-detection`, falling back to
   `application/octet-stream` when the type is unknown.

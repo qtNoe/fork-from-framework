@@ -53,6 +53,23 @@ The summary line is the trace id, channel, level, and message. Click the row to 
 
 The tab uses the standard messages widget and includes a search input. Searching matches against the channel, level, message, and every context and extra value, so you can quickly filter to a specific trace id, view path, or user id.
 
+### Resolutions
+
+Every convention lookup the [Registry](../advanced-features/modules.md) performed for the page is
+listed with its origin: the controller and every model, plus each loaded route file, labeled
+`userspace`, `module:<package>`, or `framework`, together with the winning file path. Lookups that
+resolved through the recursive subdirectory index carry a `(recursive)` suffix.
+
+```
+controllers: GuestbookController    module:zubzet/example-guestbook (/var/www/vendor/.../GuestbookController.php)
+models: GuestbookStatsModel         module:zubzet/example-guestbook (recursive) (...)
+routes: DefaultRoutes.php           framework (...)
+```
+
+With modules installed this answers "which root won this name" at a glance, so shadowing is never
+invisible: if a module view or controller unexpectedly takes over, the tab shows exactly where the
+file came from.
+
 ## Hiding framework queries
 
 The framework runs many queries on its own behalf for authentication, sessions, permissions, migrations, and similar concerns. By default these are hidden so the queries tab only shows queries from your own application.
