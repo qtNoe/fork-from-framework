@@ -101,6 +101,7 @@ Defined in `src/Support/GlobalReferences.php`, all wrapped with `FunctionConflic
 | `request()` | Current `Request` |
 | `response()` | Current `Response` |
 | `config($key=null, $useDefault=true, $default=null)` | Booter setting value, or array of all settings |
+| `configNumeric($key, $default)` | Booter setting as `int`, throwing on a non-numeric value |
 | `user()` | `User` (currently logged-in) |
 | `db($connection="default")` | `Connection` |
 | `model($name, $dir=null)` | Model instance |

@@ -90,21 +90,12 @@
                 'driver' => Mysql::class,
             ]);
 
-            // Check if timeout config is a valid number
-            $timeout = config("db_connection_timeout", default: 900);
-            if(!is_numeric($timeout)) {
-                throw new \InvalidArgumentException("Config key 'db_connection_timeout' must be numeric, got: '$timeout'");
-            }
-            $this->connectTimeout = (int) $timeout;
+            $this->connectTimeout = configNumeric("db_connection_timeout", 900);
 
             // Number of extra attempts made when a query fails with a transient,
             // cluster-related error (deadlock, lock-wait timeout, Galera
             // serialization conflict). 0 disables retries entirely.
-            $maxRetries = config("db_max_retries", default: 3);
-            if(!is_numeric($maxRetries)) {
-                throw new \InvalidArgumentException("Config key 'db_max_retries' must be numeric, got: '$maxRetries'");
-            }
-            $this->maxRetries = max(0, (int) $maxRetries);
+            $this->maxRetries = max(0, configNumeric("db_max_retries", 3));
 
             $this->user = config("dbusername");
             $this->password = config("dbpassword");

@@ -78,6 +78,28 @@
             }
         });
 
+        FunctionConflictResolution::requireAndThen("configNumeric", function() {
+            /**
+             * Fetches a configuration value that has to be a number.
+             *
+             * Non-numeric values are rejected instead of cast, where a typo or
+             * a value like "off" would silently become 0 and disable whatever
+             * the setting controls.
+             *
+             * @param string $key Setting key
+             * @param int $default Value used when the key is missing
+             * @throws \InvalidArgumentException When the configured value is not numeric
+             * @return int Configured value as an integer
+             */
+            function configNumeric(string $key, int $default): int {
+                $value = config($key, default: $default);
+                if(!is_numeric($value)) {
+                    throw new \InvalidArgumentException("Config key '$key' must be numeric, got: '$value'");
+                }
+                return (int) $value;
+            }
+        });
+
         FunctionConflictResolution::requireAndThen("user", function() {
             /**
              * Proxy to the currently logged-in user's object
