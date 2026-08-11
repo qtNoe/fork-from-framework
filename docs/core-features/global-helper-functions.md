@@ -82,6 +82,26 @@ config("db_username");
 
 ---
 
+### `configNumeric()`
+
+Retrieves a [configuration value](configuration.md) that has to be a number.
+
+**Syntax:** `configNumeric(string $key, int $default)`
+
+* **$key**: The configuration identifier.
+* **$default**: The value to return if the key is missing.
+
+**Note:** Non-numeric values are rejected with an `InvalidArgumentException` instead of being cast. A typo or a value like `off` would otherwise silently become `0` and disable whatever the setting controls.
+
+**Example:**
+
+```php
+configNumeric("db_max_retries", 3);
+
+```
+
+---
+
 ### `user()`
 
 Returns the instance of the [currently authenticated user](../api/classes/ZubZet-Framework-Authentication-User.html).
