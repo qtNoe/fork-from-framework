@@ -450,41 +450,45 @@
 
             // PHP 8.1+ defaults mysqli to STRICT reporting, which makes
             // multi_query() / next_result() throw mysqli_sql_exception instead
-            // of returning false / setting errno. Catch any of them and route
-            // back through the framework's throwOnFailure contract.
+            // of returning false / setting errno. Both reporting modes are
+            // routed through multiQueryFailed().
             try {
-                if($this->conn->multi_query($query) === false) {
-                    if($throwOnFailure) throw new \Exception("SQL Multi-Query Error: " . $this->conn->error . "\nQuery: " . $query);
-                    return false;
+                if(false === $this->conn->multi_query($query)) {
+                    return $this->multiQueryFailed($this->conn->error, $query, $throwOnFailure);
                 }
 
                 do {
-                    if($this->conn->errno) {
-                        if($throwOnFailure) throw new \Exception("SQL Multi-Query Error: " . $this->conn->error . "\nQuery: " . $query);
-
-                        while($this->conn->more_results()) $this->conn->next_result();
-                        return false;
-                    }
+                    if($this->conn->errno) return $this->multiQueryFailed($this->conn->error, $query, $throwOnFailure);
 
                     if($result = $this->conn->store_result()) $result->free();
                 } while($this->conn->more_results() && $this->conn->next_result());
 
-                if($this->conn->errno) {
-                    if($throwOnFailure) throw new \Exception("SQL Multi-Query Error: " . $this->conn->error . "\nQuery: " . $query);
-                    return false;
-                }
-            } catch(\mysqli_sql_exception $e) {
-                if($throwOnFailure) throw new \Exception("SQL Multi-Query Error: " . $e->getMessage() . "\nQuery: " . $query, 0, $e);
-                while($this->conn->more_results()) {
-                    try {
-                        $this->conn->next_result();
-                    } catch(\mysqli_sql_exception) {}
-                }
-                return false;
+                if($this->conn->errno) return $this->multiQueryFailed($this->conn->error, $query, $throwOnFailure);
+            } catch(\mysqli_sql_exception $error) {
+                return $this->multiQueryFailed($error->getMessage(), $query, $throwOnFailure, $error);
             }
 
             $this->lastHeartbeat = time();
             return true;
+        }
+
+        /**
+         * The single failure path of executeMultiQuery(), applying the
+         * framework's throwOnFailure contract. A swallowed failure drains the
+         * connection first, so the caller can keep using it.
+         */
+        private function multiQueryFailed(string $message, string $query, bool $throwOnFailure, ?\mysqli_sql_exception $error = null): bool {
+            if($throwOnFailure) throw new \Exception("SQL Multi-Query Error: " . $message . "\nQuery: " . $query, 0, $error);
+
+            // Discard the result sets still pending, which would otherwise
+            // fail the next statement with "commands out of sync". Draining
+            // stops at the first error: a connection that cannot be drained is
+            // replaced by assertConnection() on its next use.
+            try {
+                while($this->conn->more_results()) $this->conn->next_result();
+            } catch(\mysqli_sql_exception) {}
+
+            return false;
         }
 
         public function getDatabaseConnection(): \mysqli {
