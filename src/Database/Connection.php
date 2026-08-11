@@ -141,35 +141,31 @@
             $host = $endpoint->host;
             if($this->persistent) $host = "p:" . $host;
 
-            // PHP 8.1+ strict reporting throws a mysqli_sql_exception naming
-            // the real failure; PHP 8.0 returns false and raises warnings
-            // instead, leaving connect_error empty for TLS failures. Collect
-            // the warnings and normalize, so both versions throw the same
-            // exception with the same message and the caller's retry
-            // classification sees the real error code.
+            // A failing connect raises warnings next to the failure itself on
+            // every PHP version. "@" keeps them out of the response and away
+            // from the framework's error handler, which promotes warnings to
+            // an ErrorException under BehaviorOption::ALL - thrown from inside
+            // real_connect(), where the retry classification never sees it.
             // Positional arguments because mysqli renamed its parameters
             // between PHP versions.
-            $warnings = [];
-            set_error_handler(function(int $severity, string $message) use (&$warnings): bool {
-                $warnings[] = $message;
-                return true;
-            });
-            try {
-                $connected = $conn->real_connect(
-                    $host,
-                    $this->user,
-                    $this->password,
-                    $this->database,
-                    $endpoint->port,
-                    null,
-                    $flags,
-                );
-            } finally {
-                restore_error_handler();
-            }
+            $connected = @$conn->real_connect(
+                $host,
+                $this->user,
+                $this->password,
+                $this->database,
+                $endpoint->port,
+                null,
+                $flags,
+            );
+
+            // PHP 8.1+ throws the real failure before returning. PHP 8.0
+            // returns false instead and leaves connect_error empty for TLS
+            // failures, so that case is normalized to what 8.1+ would report.
             if(false === $connected || $conn->connect_errno) {
                 $message = (string) $conn->connect_error;
-                if("" === $message) $message = (string) ($warnings[0] ?? "");
+                if("" === $message) {
+                    $message = "Cannot connect to MySQL";
+                }
                 throw new \mysqli_sql_exception($message, (int) $conn->connect_errno);
             }
 
