@@ -164,7 +164,9 @@
             if(false === $connected || $conn->connect_errno) {
                 $message = (string) $conn->connect_error;
                 if("" === $message) {
-                    $message = "Cannot connect to MySQL";
+                    $message = $endpoint->tls
+                        ? "Cannot connect to MySQL using SSL"
+                        : "Cannot connect to MySQL";
                 }
                 throw new \mysqli_sql_exception($message, (int) $conn->connect_errno);
             }
@@ -323,9 +325,14 @@
             while(true) {
                 $failure = $this->attemptStatement($query, $bindArgs, $reconnect);
                 if(is_null($failure)) return;
+                if($attempt >= $this->maxRetries) throw $failure->exception;
 
-                if($this->shouldRetry($attempt, $failure->errorCode, $failure->sqlState)) {
-                    $attempt++;
+                $attempt++;
+
+                $transient = in_array($failure->errorCode, self::RETRYABLE_ERROR_CODES, true)
+                    || (!is_null($failure->sqlState) && in_array($failure->sqlState, self::RETRYABLE_SQL_STATES, true));
+
+                if($transient) {
                     // A transient failure always leaves a live connection:
                     // connect() failures only carry connection-loss codes,
                     // never transient ones, so no reconnect is needed here.
@@ -334,10 +341,9 @@
                     continue;
                 }
 
-                if($this->shouldReconnect($attempt, $failure->errorCode)) {
-                    $attempt++;
+                if(in_array($failure->errorCode, self::CONNECTION_LOSS_ERROR_CODES, true)) {
                     $reconnect = true;
-                    usleep($this->reconnectBackoffUs($attempt));
+                    usleep(min($attempt * self::RECONNECT_BACKOFF_STEP_US, self::RECONNECT_BACKOFF_CAP_US));
                     continue;
                 }
 
@@ -387,40 +393,6 @@
             }
 
             return null;
-        }
-
-        /**
-         * Whether a just-failed query should be retried: there must be retry
-         * budget left and the error must be a transient, cluster-related one.
-         */
-        private function shouldRetry(int $attempt, int $errorCode, ?string $sqlState): bool {
-            return $attempt < $this->maxRetries && $this->isRetryable($errorCode, $sqlState);
-        }
-
-        /**
-         * Whether a just-failed query should be recovered by reconnecting:
-         * there must be retry budget left and the error must mean the
-         * connection itself is gone.
-         */
-        private function shouldReconnect(int $attempt, int $errorCode): bool {
-            return $attempt < $this->maxRetries
-                && in_array($errorCode, self::CONNECTION_LOSS_ERROR_CODES, true);
-        }
-
-        /** Attempt-scaled backoff slept before a reconnect attempt. */
-        private function reconnectBackoffUs(int $attempt): int {
-            return min($attempt * self::RECONNECT_BACKOFF_STEP_US, self::RECONNECT_BACKOFF_CAP_US);
-        }
-
-        /**
-         * Classifies an error as retryable. Retries are limited to transient
-         * contention errors where the server already discarded the statement,
-         * making a re-run safe. Pure decision, no side effects.
-         */
-        private function isRetryable(int $errorCode, ?string $sqlState): bool {
-            if(in_array($errorCode, self::RETRYABLE_ERROR_CODES, true)) return true;
-            if(!is_null($sqlState) && in_array($sqlState, self::RETRYABLE_SQL_STATES, true)) return true;
-            return false;
         }
 
         /**
