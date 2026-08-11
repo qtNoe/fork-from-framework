@@ -328,7 +328,7 @@
                 $failure = $this->attemptStatement($query, $bindArgs, $reconnect);
                 if(is_null($failure)) return;
 
-                if($this->shouldRetry($attempt, $failure["errorCode"], $failure["sqlState"])) {
+                if($this->shouldRetry($attempt, $failure->errorCode, $failure->sqlState)) {
                     $attempt++;
                     // A transient failure always leaves a live connection:
                     // connect() failures only carry connection-loss codes,
@@ -338,21 +338,21 @@
                     continue;
                 }
 
-                if($this->shouldReconnect($attempt, $failure["errorCode"])) {
+                if($this->shouldReconnect($attempt, $failure->errorCode)) {
                     $attempt++;
                     $reconnect = true;
                     usleep($this->reconnectBackoffUs($attempt));
                     continue;
                 }
 
-                throw $failure["exception"];
+                throw $failure->exception;
             }
         }
 
         /**
          * Makes one attempt at the statement: reconnect when asked to,
-         * prepare, bind, execute. Returns null on success and a failure
-         * descriptor (see failure()) otherwise.
+         * prepare, bind, execute. Returns null on success and a
+         * StatementFailure otherwise.
          *
          * mysqli reports failures by throwing under PHP 8.1+ strict
          * reporting and by return value on PHP 8.0; both are captured here,
@@ -360,14 +360,14 @@
          * phases are guarded separately so each one names its own error
          * prefix, on the return-value path as well as the throwing one.
          */
-        private function attemptStatement(string $query, array $bindArgs, bool $reconnect): ?array {
+        private function attemptStatement(string $query, array $bindArgs, bool $reconnect): ?StatementFailure {
             // Reaching the server and preparing the statement.
             try {
                 if($reconnect) $this->connect();
 
                 $statement = $this->conn->prepare($query);
                 if(is_bool($statement)) {
-                    return $this->failure("SQL Error", $this->conn->errno, $this->conn->sqlstate, $this->conn->error, $query);
+                    return StatementFailure::preparing($this->conn->errno, $this->conn->sqlstate, $this->conn->error, $query);
                 }
                 $this->stmt = $statement;
 
@@ -378,33 +378,19 @@
                 // both leave the recovery loop and surface to the caller.
                 if(!empty($bindArgs)) $this->stmt->bind_param(...$bindArgs);
             } catch(\mysqli_sql_exception $error) {
-                return $this->failure("SQL Error", (int) $error->getCode(), $this->sqlStateOf($error), $error->getMessage(), $query, $error);
+                return StatementFailure::preparing((int) $error->getCode(), $this->sqlStateOf($error), $error->getMessage(), $query, $error);
             }
 
             // Running it.
             try {
                 if(!$this->stmt->execute()) {
-                    return $this->failure("SQL Execution Error", $this->stmt->errno, $this->stmt->sqlstate, $this->stmt->error, $query);
+                    return StatementFailure::executing($this->stmt->errno, $this->stmt->sqlstate, $this->stmt->error, $query);
                 }
             } catch(\mysqli_sql_exception $error) {
-                return $this->failure("SQL Execution Error", (int) $error->getCode(), $this->sqlStateOf($error), $error->getMessage(), $query, $error);
+                return StatementFailure::executing((int) $error->getCode(), $this->sqlStateOf($error), $error->getMessage(), $query, $error);
             }
 
             return null;
-        }
-
-        /**
-         * Failure descriptor for one statement attempt, carrying what the
-         * recovery decision needs and the ready-to-throw exception with the
-         * historical prefix: "SQL Error" for connect and prepare failures,
-         * "SQL Execution Error" for execute failures.
-         */
-        private function failure(string $errorPrefix, int $errorCode, ?string $sqlState, string $message, string $query, ?\mysqli_sql_exception $error = null): array {
-            return [
-                "errorCode" => $errorCode,
-                "sqlState" => $sqlState,
-                "exception" => new \Exception($errorPrefix . ": " . $message . "\nQuery: " . $query, 0, $error),
-            ];
         }
 
         /**
