@@ -356,33 +356,41 @@
          *
          * mysqli reports failures by throwing under PHP 8.1+ strict
          * reporting and by return value on PHP 8.0; both are captured here,
-         * reading the SQLSTATE from the handle that recorded it.
+         * reading the SQLSTATE from the handle that recorded it. The two
+         * phases are guarded separately so each one names its own error
+         * prefix, on the return-value path as well as the throwing one.
          */
         private function attemptStatement(string $query, array $bindArgs, bool $reconnect): ?array {
+            // Reaching the server and preparing the statement.
             try {
-                $errorPrefix = "SQL Error";
                 if($reconnect) $this->connect();
 
                 $statement = $this->conn->prepare($query);
                 if(is_bool($statement)) {
-                    return $this->failure($errorPrefix, $this->conn->errno, $this->conn->sqlstate, $this->conn->error, $query);
+                    return $this->failure("SQL Error", $this->conn->errno, $this->conn->sqlstate, $this->conn->error, $query);
                 }
                 $this->stmt = $statement;
 
                 // PHP 8's mysqli throws ArgumentCountError / ValueError when
                 // the type string or value count doesn't match the prepared
                 // statement; bind_param() no longer returns false in any
-                // reachable scenario.
+                // reachable scenario. Neither is a mysqli_sql_exception, so
+                // both leave the recovery loop and surface to the caller.
                 if(!empty($bindArgs)) $this->stmt->bind_param(...$bindArgs);
-
-                $errorPrefix = "SQL Execution Error";
-                if(!$this->stmt->execute()) {
-                    return $this->failure($errorPrefix, $this->stmt->errno, $this->stmt->sqlstate, $this->stmt->error, $query);
-                }
-                return null;
             } catch(\mysqli_sql_exception $error) {
-                return $this->failure($errorPrefix, (int) $error->getCode(), $this->sqlStateOf($error), $error->getMessage(), $query, $error);
+                return $this->failure("SQL Error", (int) $error->getCode(), $this->sqlStateOf($error), $error->getMessage(), $query, $error);
             }
+
+            // Running it.
+            try {
+                if(!$this->stmt->execute()) {
+                    return $this->failure("SQL Execution Error", $this->stmt->errno, $this->stmt->sqlstate, $this->stmt->error, $query);
+                }
+            } catch(\mysqli_sql_exception $error) {
+                return $this->failure("SQL Execution Error", (int) $error->getCode(), $this->sqlStateOf($error), $error->getMessage(), $query, $error);
+            }
+
+            return null;
         }
 
         /**
