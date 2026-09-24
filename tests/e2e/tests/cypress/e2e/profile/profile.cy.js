@@ -14,15 +14,28 @@ describe('Profile', () => {
     function post(action, body) {
         const isRaw = typeof body === 'string';
 
+        // The marker Z.js sends along: Z.Forms for the password change, Z.Request for the rest
+        const marker = 'change-password' === action ? { isFormData: 1 } : { action };
+
         return cy.request({
             method: 'POST',
             url: `/_zubzet/profile/${action}`,
             form: !isRaw,
             headers: isRaw ? { 'content-type': 'application/x-www-form-urlencoded' } : undefined,
             failOnStatusCode: false,
-            body,
+            body: isRaw ? `${body}&${new URLSearchParams(marker)}` : { ...marker, ...body },
         }).then((res) => typeof res.body === 'string' ? JSON.parse(res.body) : res.body);
     }
+
+    it('turns away a post without the marker Z.js sends', () => {
+        login('0800a');
+
+        ['change-password', 'clear-sessions', 'revoke-token', 'rename-token', 'create-api-key'].forEach((action) => {
+            cy.request({ method: 'POST', url: `/_zubzet/profile/${action}`, form: true, body: {} })
+                .then((res) => JSON.parse(res.body))
+                .should('deep.include', { result: 'error', message: 'Invalid request' });
+        });
+    });
 
     function tokenActive(prefix) {
         return cy.request(`/AuthProbe/tokenActive/${token(prefix)}`)
