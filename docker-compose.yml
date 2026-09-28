@@ -1,0 +1,9 @@
+services:
+  app:
+    image: debian:bookworm-slim
+    container_name: zubzet-new
+    command: sleep infinity
+    working_dir: /home/noah/development/Kunden/ZubZet/TestInstallation/NEW
+    volumes:
+      - /home/noah/development/Kunden/ZubZet/TestInstallation/NEW:/home/noah/development/Kunden/ZubZet/TestInstallation/NEW
+      - /var/run/docker.sock:/var/run/docker.sock
